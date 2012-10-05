@@ -1,0 +1,23 @@
+body
+{
+    background-color:#AAAAAA;
+}
+div
+{
+    margin:auto;
+    width:30%;
+    text-align:center;
+
+
+}
+
+ul
+{
+    list-style-type:none;  
+    margin:auto;
+}
+
+a
+{
+    text-decoration: none; 
+}

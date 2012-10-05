@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="authors"             content="Chris,John" />
+    <title>
+        The hit puzzle suddenly in your browser!
+    </title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js" type="text/javascript"></script>
+
+    <link rel="stylesheet"  href="style.css" type="text/css" media="screen"/>
+    <link rel="shortcut icon" type="image/png" href="resources/favicon.png">
+    
+    <!-- FileOps -->
+    <script type="text/javascript" src="fileOps/fileOperator.js"></script>       
+
+    <!-- rubixStructures -->
+    <script type="text/javascript" src="rubixStructures/rubixCube.js"></script>       
+    
+    <!-- rubixWGL -->
+    <script type="text/javascript" src="rubixWGL/rubix3DG.js"></script>     
+    <script type="text/javascript" src="rubixWGL/rubixShader.js"></script>
+</head>
+
+<body onload="FileOperator.init();Rubix3DG.init()">
+    <canvas id = "playWindow"
+            width=600
+            height=600>
+            I'm sorry but you quite literally cannot use this tool.
+    </canvas>
+    <div id="outputDiv">
+        Output goes where?
+    </div>
+            
+
+</body>
+</html>
