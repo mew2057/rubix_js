@@ -2,6 +2,12 @@
     fileOperator.js
     A collection of operations that make use of the HTML5 file api. This contains
     convenience functions to handle file io on a browser.
+    
+    ----------------------------------------------------------------------------
+    10-4-12:
+        Updated By: John Dunham
+        Notes: Created the file and class. Opted for a psuedo singleton, as 
+            there should really only be one of these per window.
     ---------------
  */
 function FileOperator()
@@ -78,35 +84,12 @@ FileOperator.prototype.processFileText = function(input)
         }        
     }
     
-    console.log(faces);
     FileOperator.presentForDownload("test");
 };
 
-// From http://www.html5rocks.com/en/tutorials/file/filesystem/
 function generalErrorHandler(e)
 {
-    var msg = '';
-
-    switch (e.code) {
-    case FileError.QUOTA_EXCEEDED_ERR:
-      msg = 'QUOTA_EXCEEDED_ERR';
-      break;
-    case FileError.NOT_FOUND_ERR:
-      msg = 'NOT_FOUND_ERR';
-      break;
-    case FileError.SECURITY_ERR:
-      msg = 'SECURITY_ERR';
-      break;
-    case FileError.INVALID_MODIFICATION_ERR:
-      msg = 'INVALID_MODIFICATION_ERR';
-      break;
-    case FileError.INVALID_STATE_ERR:
-      msg = 'INVALID_STATE_ERR';
-      break;
-    default:
-      msg = 'Unknown Error';
-      break;
-  };
+    console.log("Error" + e);
 }
 
 FileOperator.presentForDownload = function(data)
