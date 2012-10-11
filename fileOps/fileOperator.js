@@ -26,10 +26,9 @@ FileOperator.init = function()
     window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
        
     window.addEventListener("drop",FileOperator.operator.drop);
-    window.addEventListener("dragEnter",FileOperator.operator.nullEffects);
-
-    
+    window.addEventListener("dragEnter",FileOperator.operator.nullEffects);    
 };
+
 FileOperator.prototype.nullEffects = function(e)
 {
     e.stopPropagation();
@@ -40,6 +39,7 @@ FileOperator.prototype.drop = function(e)
 {
     e.stopPropagation();
     e.preventDefault();
+    
     console.log(e.dataTransfer.files[0]);
     var reader = new FileReader();
     
@@ -84,7 +84,7 @@ FileOperator.prototype.processFileText = function(input)
         }        
     }
     
-    FileOperator.presentForDownload("test");
+    FileOperator.presentForDownload("This is some dummy data.");
 };
 
 function generalErrorHandler(e)
@@ -92,9 +92,17 @@ function generalErrorHandler(e)
     console.log("Error" + e);
 }
 
-FileOperator.presentForDownload = function(data)
+FileOperator.presentForDownload = function(data, functionCallback)
 {
-    FileOperator.operator.toWrite = data;
+    if(functionCallback)
+    {
+        FileOperator.operator.toWrite = data.functionCallback();
+    }
+    else
+    {
+        FileOperator.operator.toWrite = data.toString();
+    }
+    
     // Initialize the sandboxed file system 
     // I allocated 10 MB, but I don't think we'll need that much (will refine)
     window.requestFileSystem(window.TEMPORARY, 10*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
