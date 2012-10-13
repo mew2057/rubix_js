@@ -75,8 +75,8 @@ FileOperator.prototype.processFileText = function(input)
             case 2 :
             case 3 :
                 faces[1] += line.substring(0,3);
-                faces[2] += line.substring(0,3);
-                faces[3] += line.substring(0,3);
+                faces[2] += line.substring(3,6);
+                faces[3] += line.substring(6,9);
                 break;
             default:
                 faces.push(line);
@@ -84,6 +84,12 @@ FileOperator.prototype.processFileText = function(input)
         }        
     }
     
+    for(var face in faces)
+    {
+        faces[face] = faces[face].split('');
+    }
+    
+    RubixState.initFromArray(faces);
     FileOperator.presentForDownload("This is some dummy data.");
 };
 
