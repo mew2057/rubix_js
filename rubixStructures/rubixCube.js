@@ -60,7 +60,19 @@ RubixState.prototype.findCubie = function(cubie)
     
     // Should not get here.
     throw "Cubie not found: Invalid cubie";
-}
+};
+
+/**
+ * Returns a copy of this state.
+ * @return a copy of this state
+ */
+RubixState.prototype.copy = function()
+{
+    var copy = new RubixState();
+    for (var index in this.cubies)
+        copy.cubies[index] = this.cubies[index].copy();
+    return copy;
+};
 
 /**
  * Converts this cube to a formatted string. 
@@ -129,6 +141,70 @@ RubixState.initWithGoalState = function()
         Cubie.create(RubixState.colors.white, RubixState.colors.orange, RubixState.colors.green),
         Cubie.create(RubixState.colors.white, RubixState.colors.orange),
         Cubie.create(RubixState.colors.white, RubixState.colors.orange, RubixState.colors.blue)
+    ];
+    
+    return goalState;
+};
+
+RubixState.initWithString = function(text)
+{
+    var faces = [];
+    
+
+    // Iterate over the input string to organize our data.
+    for(var index = 0, line= " ", length = text.length / 9; index <length; index++)
+    {
+        line = text.substring(index*9,index*9 + 9);
+        
+        // Switch on indices in a manner befitting of a boss.
+        switch(index)
+        {
+            case 1:
+                faces.push(line.substring(0,3));
+                faces.push(line.substring(3,6));
+                faces.push(line.substring(6,9));
+                break;
+            case 2 :
+            case 3 :
+                faces[1] += line.substring(0,3);
+                faces[2] += line.substring(3,6);
+                faces[3] += line.substring(6,9);
+                break;
+            default:
+                faces.push(line);
+                break;
+        }        
+    }
+    
+    for(var face in faces)
+    {
+        faces[face] = faces[face].split('');
+    }
+    
+    var goalState = new RubixState();
+    
+    goalState.cubies = [
+        // In order according to the representation below.
+        Cubie.create(faces[0][0], faces[5][6], faces[1][0]),
+        Cubie.create(faces[0][1], faces[5][7]),
+        Cubie.create(faces[0][2], faces[5][8], faces[3][2]),
+        Cubie.create(faces[0][3], faces[1][2]),
+        Cubie.create(faces[0][5], faces[3][1]),
+        Cubie.create(faces[0][6], faces[2][0], faces[1][2]),
+        Cubie.create(faces[0][7], faces[2][1]),
+        Cubie.create(faces[0][8], faces[2][2], faces[3][0]),
+        Cubie.create(faces[5][3], faces[1][3]),
+        Cubie.create(faces[2][3], faces[1][5]),
+        Cubie.create(faces[2][5], faces[3][3]),
+        Cubie.create(faces[5][5], faces[3][5]),
+        Cubie.create(faces[2][6], faces[4][0], faces[1][8]),
+        Cubie.create(faces[2][7], faces[4][1]),
+        Cubie.create(faces[2][8], faces[4][2], faces[3][6]),
+        Cubie.create(faces[4][3], faces[1][7]), 
+        Cubie.create(faces[4][5], faces[3][7]),
+        Cubie.create(faces[5][0], faces[4][6], faces[1][7]),
+        Cubie.create(faces[5][1], faces[4][7]),
+        Cubie.create(faces[5][2], faces[4][8], faces[3][8])
     ];
     
     return goalState;
@@ -207,6 +283,7 @@ Cubie.prototype.rotate = function(face, rotations)
 {
     for (var index in this.faces)
     {
+        // Face doesn't change if it's the rotating face.
         if (this.faces[index].face === face)
             continue;
         
@@ -215,8 +292,8 @@ Cubie.prototype.rotate = function(face, rotations)
 };
 
 /**
- * Returns an idenifier for this cubie based on its colors. Disregards position.
- * @return an idenifier for this cubie
+ * Returns an identifier for this cubie based on its colors. Disregards position.
+ * @return an identifier for this cubie
  */
 Cubie.prototype.getColorId = function()
 {
@@ -247,7 +324,8 @@ Cubie.prototype.getColor = function(face)
 };
 
 /**
- * Returns true if the cubie is valid. (Not sure if this will be useful...)
+ * Returns true if the cubie is valid. Only checks colors, since a cubie doesn't
+ * know if it's in the correct position. (Not sure if this will be useful...)
  * @return true if the cubie is valid, false otherwise. 
  */
 Cubie.prototype.isValid = function() 
@@ -275,7 +353,7 @@ Cubie.prototype.isValid = function()
  */
 Cubie.prototype.isSide = function()
 {
-    return this.colors.length == 2;
+    return this.faces.length === 2;
 };
 
 /**
@@ -284,7 +362,24 @@ Cubie.prototype.isSide = function()
  */
 Cubie.prototype.isCorner = function()
 {
-    return this.colors.length == 3;
+    return this.faces.length === 3;
+};
+
+Cubie.prototype.equals = function(other)
+{
+    return JSON.stringify(this) === JSON.stringify(other);
+};
+
+/**
+ * Returns a copy of this cubie.
+ * @return a copy of this cubie
+ */
+Cubie.prototype.copy = function()
+{
+    var faces = [];
+    for (var index in this.faces)
+        faces[index] = this.faces[index].copy();
+    return new Cubie(faces);
 };
 
 /**
@@ -363,7 +458,19 @@ function CubieFace(color, face)
  */
 CubieFace.prototype.rotate = function(face, rotations)
 {
-    this.face = CubieFace.newFaceMap[face][this.face][rotations];
+    // Added a tenary operator to handle an undefined issue.
+    this.face = CubieFace.newFaceMap[face][this.face]? 
+        CubieFace.newFaceMap[face][this.face][rotations]:this.face;
+        console.log(this.face);
+};
+
+/**
+ * Returns a copy of this cubie face.
+ * @return a copy of this cubie face
+ */
+CubieFace.prototype.copy = function()
+{
+    return new CubieFace(this.color, this.face);
 };
 
 /**
@@ -392,9 +499,9 @@ CubieFace.newFaceMap = {
             3 : 5
         },
         5 : {
-            1 : 1,
+            1 : 3,
             2 : 2,
-            3 : 3
+            3 : 1
         }
     },
     1 : {

@@ -6,20 +6,28 @@
     <title>
         The hit puzzle suddenly in your browser!
     </title>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript" src="control/jquery-1.8.2.min.js" /></script>
 
     <link rel="stylesheet"  href="style.css" type="text/css" media="screen"/>
     <link rel="shortcut icon" type="image/png" href="resources/favicon.png">
     
-    <!-- FileOps -->
-    <script type="text/javascript" src="fileOps/fileOperator.js"></script>       
 
     <!-- rubixStructures -->
+    <script type="text/javascript" src="rubixStructures/priorityQueue.js"></script>       
     <script type="text/javascript" src="rubixStructures/rubixCube.js"></script>       
+    <script type="text/javascript" src="rubixStructures/rubixNode.js"></script>       
+
     
     <!-- rubixWGL -->
     <script type="text/javascript" src="rubixWGL/rubix3DG.js"></script>     
     <script type="text/javascript" src="rubixWGL/rubixShader.js"></script>
+
+    <!-- Search -->
+    <script type="text/javascript" src="search/iterativeAStar.js"></script>
+
+    <!-- FileOps -->
+    <script type="text/javascript" src="fileOps/fileOperator.js"></script>       
+
 </head>
 
 <body onload="FileOperator.init();Rubix3DG.init()">

@@ -23,7 +23,7 @@ Rubix3DG.init = function()
     rubix.context.clear(rubix.context.COLOR_BUFFER_BIT);
 };
 
-function Cubie()
+function Cubie3D()
 {
     this.vetices=null;
 }

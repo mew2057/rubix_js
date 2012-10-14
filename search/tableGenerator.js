@@ -1,9 +1,24 @@
 
 $(document).ready(function() {
-    
+    TableGenerator.generate();
 });
 
 function TableGenerator() {}
+
+TableGenerator.generate = function()
+{
+    var rubix = CubeHeuristics.goalState.copy();
+    
+    rubix.rotate(RubixState.faces.right, 3);
+    rubix.rotate(RubixState.faces.front, 3);
+    rubix.rotate(RubixState.faces.top, 3);
+    
+    console.log(CubeHeuristics.goalState.toString(true));
+    console.log(rubix.toString(true));
+    
+    console.log(CubeHeuristics.manhattanDistanceOfSides(rubix));
+    console.log(CubeHeuristics.manhattanDistanceOfCorners(rubix));
+};
 
 // TODO
 
@@ -13,8 +28,8 @@ CubeHeuristics.goalState = RubixState.initWithGoalState();
 
 CubeHeuristics.heuristic = function(rubixState)
 {
-    return Math.max(CubeHeuristics.manhattanDistanceOfSides(),
-                    CubeHeuristics.manhattanDistanceOfCorners());
+    return Math.max(CubeHeuristics.manhattanDistanceOfSides(rubixState),
+                    CubeHeuristics.manhattanDistanceOfCorners(rubixState));
 };
 
 /* 
@@ -24,43 +39,80 @@ take at least 2 moves to right it. 3 moves for sides.
 
 CubeHeuristics.manhattanDistanceOfSides = function(rubixState)
 {
-    var sum = 0, goalIndex;
+    var sum = 0, moves = 0, goalIndex, farSides;
     
-    for (var index in rubixState.cubies)
+    for (var index = 0; index < rubixState.cubies.length; index++)
     {
         if (rubixState.cubies[index].isCorner())
             continue;
         
+        moves = 0;
         goalIndex = CubeHeuristics.goalState.findCubie(rubixState.cubies[index]);
+        farSides = CubeHeuristics.farSides[index];
         
-        // TODO
+        // If it's a far side, need at least 2 moves to correct it's position.
+        if (farSides.indexOf(goalIndex) !== -1)
+            moves = 2;
+        // Otherwise, if it's not already in the correct position.
+        else if (index !== goalIndex)
+            moves = 1;
+        
+        // Check orientation
+        if (moves === 0)
+        {
+            if (!rubixState.cubies[index].equals(CubeHeuristics.goalState.cubies[index]))
+                moves += 3;
+        }
+        else if (moves === 1)
+        {
+            // Rotate to correct position and check orientation.
+        }
+        
+        sum += moves;
     }
     
     // TODO - orientation - I think if the orientation doesn't match, it is still
-    //   admissible to assume 1 extra move is needed if its distance away is only 1.
+    //   admissible to assume 1 extra move is needed if its distance away is less than 1.
+    //   Also, the only way to do this, at least from what I can see is to perform
+    //   the rotation to correct it's position, then determine if the orientation is correct.
     
     return sum / 4;
 };
 
 CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
 {
-    var sum = 0, goalIndex;
+    var sum = 0, moves = 0, goalIndex;
     
-    for (var index in rubixState.cubies)
+    for (var index = 0; index < rubixState.cubies.length; index++)
     {
         if (rubixState.cubies[index].isSide())
             continue;
         
+        moves = 0;
         goalIndex = CubeHeuristics.goalState.findCubie(rubixState.cubies[index]);
         
+        // If it's a far corner, need at least 2 moves to correct it's position.
         if (CubeHeuristics.farCorners[index] === goalIndex)
-            sum += 2;
-        else
-            sum += 1;
+            moves = 2;
+        // Otherwise, if it's not already in the correct position.
+        else if (index !== goalIndex)
+            moves = 1;
+        
+        // Check orientation
+        if (moves === 0)
+        {
+            if (!rubixState.cubies[index].equals(CubeHeuristics.goalState.cubies[index]))
+                moves += 2;
+        }
+        else if (moves === 1)
+        {
+            // Rotate to correct position and check orientation.
+        }
+        
+        sum += moves;
     }
     
-    // TODO - orientation - I think if the orientation doesn't match, it is still
-    //   admissible to assume 1 extra move is needed if its distance away is only 1.
+    // TODO - orientation - See above
     
     return sum / 4;
 };

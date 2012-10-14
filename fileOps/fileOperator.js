@@ -54,43 +54,11 @@ FileOperator.prototype.drop = function(e)
 
 FileOperator.prototype.processFileText = function(input)
 {
-    this.text = input.replace(/\s/g,'');
+    this.text = input.replace(/\s/g,'').toUpperCase();
+       
+    var state = RubixState.initWithString(this.text);
     
-    //This code needs to go somewhere else --John
-    var faces = [];
-
-    // Iterate over the input string to organize our data.
-    for(var index = 0, line= " ",length = this.text.length / 9; index <length; index++)
-    {
-        line = this.text.substring(index*9,index*9 + 9);
-        
-        // Switch on indices in a manner befitting of a boss.
-        switch(index)
-        {
-            case 1:
-                faces.push(line.substring(0,3));
-                faces.push(line.substring(3,6));
-                faces.push(line.substring(6,9));
-                break;
-            case 2 :
-            case 3 :
-                faces[1] += line.substring(0,3);
-                faces[2] += line.substring(3,6);
-                faces[3] += line.substring(6,9);
-                break;
-            default:
-                faces.push(line);
-                break;
-        }        
-    }
-    
-    for(var face in faces)
-    {
-        faces[face] = faces[face].split('');
-    }
-    
-    RubixState.initFromArray(faces);
-    FileOperator.presentForDownload("This is some dummy data.");
+    (new AStar()).iterativeAStar(state);
 };
 
 function generalErrorHandler(e)
@@ -110,8 +78,8 @@ FileOperator.presentForDownload = function(data, functionCallback)
     }
     
     // Initialize the sandboxed file system 
-    // I allocated 10 MB, but I don't think we'll need that much (will refine)
-    window.requestFileSystem(window.TEMPORARY, 10*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
+    // I allocated 60 MB, but I don't think we'll need that much (will refine)
+    window.requestFileSystem(window.TEMPORARY, 60*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
 };
 
 FileOperator.prototype.writeAndPresent = function(fs)
