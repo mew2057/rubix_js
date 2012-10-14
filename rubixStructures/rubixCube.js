@@ -7,9 +7,9 @@
 /*
 $(document).ready(function() {
     var rubix = RubixState.initWithGoalState();
-    console.log(rubix.toString());
+    console.log(rubix.toString(true));
     rubix.rotate(RubixState.faces.top, 1);
-    console.log(rubix.toString());
+    console.log(rubix.toString(true));
 });
 */
 
@@ -47,37 +47,56 @@ RubixState.prototype.rotate = function(face, rotations)
 };
 
 /**
+ * Finds and returns the index of the given cubie on this cube state.
+ * @return the index of the given cubie.
+ */
+RubixState.prototype.findCubie = function(cubie)
+{
+    for (var index = 0; index < this.cubies.length; index++)
+    {
+        if (cubie.colorId === this.cubies[index].colorId)
+            return index;
+    }
+    
+    // Should not get here.
+    throw "Cubie not found: Invalid cubie";
+}
+
+/**
  * Converts this cube to a formatted string. 
  * @return the cube represented as a string
  */
-RubixState.prototype.toString = function()
+RubixState.prototype.toString = function(spaces)
 {
+    var newLine = spaces ? "\n" : "";
+    var space = spaces ? "   " : "";
+    
     // Back
-    var rubixStr = "   " + this.cubies[0].getColor(RubixState.faces.back) + this.cubies[1].getColor(RubixState.faces.back) + this.cubies[2].getColor(RubixState.faces.back) + "\n" +
-                   "   " + this.cubies[3].getColor(RubixState.faces.back) + RubixState.colors.red + this.cubies[4].getColor(RubixState.faces.back) + "\n" +
-                   "   " + this.cubies[5].getColor(RubixState.faces.back) + this.cubies[6].getColor(RubixState.faces.back) + this.cubies[7].getColor(RubixState.faces.back) + "\n" +
+    var rubixStr = space + this.cubies[0].getColor(RubixState.faces.back) + this.cubies[1].getColor(RubixState.faces.back) + this.cubies[2].getColor(RubixState.faces.back) + newLine +
+                   space + this.cubies[3].getColor(RubixState.faces.back) + RubixState.colors.red + this.cubies[4].getColor(RubixState.faces.back) + newLine +
+                   space + this.cubies[5].getColor(RubixState.faces.back) + this.cubies[6].getColor(RubixState.faces.back) + this.cubies[7].getColor(RubixState.faces.back) + newLine +
     // Left Top Right, 1st row
                    this.cubies[0].getColor(RubixState.faces.left) + this.cubies[3].getColor(RubixState.faces.left) + this.cubies[5].getColor(RubixState.faces.left) + 
                    this.cubies[5].getColor(RubixState.faces.top) + this.cubies[6].getColor(RubixState.faces.top) + this.cubies[7].getColor(RubixState.faces.top) + 
-                   this.cubies[7].getColor(RubixState.faces.right) + this.cubies[4].getColor(RubixState.faces.right) + this.cubies[2].getColor(RubixState.faces.right) + "\n" +
+                   this.cubies[7].getColor(RubixState.faces.right) + this.cubies[4].getColor(RubixState.faces.right) + this.cubies[2].getColor(RubixState.faces.right) + newLine +
     // Left Top Right, 2nd row
                    this.cubies[8].getColor(RubixState.faces.left) + RubixState.colors.green + this.cubies[9].getColor(RubixState.faces.left) + 
                    this.cubies[9].getColor(RubixState.faces.top) + RubixState.colors.yellow + this.cubies[10].getColor(RubixState.faces.top) + 
-                   this.cubies[10].getColor(RubixState.faces.right) + RubixState.colors.blue + this.cubies[11].getColor(RubixState.faces.right) + "\n" +
+                   this.cubies[10].getColor(RubixState.faces.right) + RubixState.colors.blue + this.cubies[11].getColor(RubixState.faces.right) + newLine +
     // Left Top Right, 3rd row
                    this.cubies[17].getColor(RubixState.faces.left) + this.cubies[15].getColor(RubixState.faces.left) + this.cubies[12].getColor(RubixState.faces.left) + 
                    this.cubies[12].getColor(RubixState.faces.top) + this.cubies[13].getColor(RubixState.faces.top) + this.cubies[14].getColor(RubixState.faces.top) + 
-                   this.cubies[14].getColor(RubixState.faces.right) + this.cubies[16].getColor(RubixState.faces.right) + this.cubies[19].getColor(RubixState.faces.right) + "\n" +
+                   this.cubies[14].getColor(RubixState.faces.right) + this.cubies[16].getColor(RubixState.faces.right) + this.cubies[19].getColor(RubixState.faces.right) + newLine +
     // Front
-                   "   " + this.cubies[12].getColor(RubixState.faces.front) + this.cubies[13].getColor(RubixState.faces.front) + this.cubies[14].getColor(RubixState.faces.front) + "\n" +
-                   "   " + this.cubies[15].getColor(RubixState.faces.front) + RubixState.colors.orange + this.cubies[16].getColor(RubixState.faces.front) + "\n" +
-                   "   " + this.cubies[17].getColor(RubixState.faces.front) + this.cubies[18].getColor(RubixState.faces.front) + this.cubies[19].getColor(RubixState.faces.front) + "\n" +
+                   space + this.cubies[12].getColor(RubixState.faces.front) + this.cubies[13].getColor(RubixState.faces.front) + this.cubies[14].getColor(RubixState.faces.front) + newLine +
+                   space + this.cubies[15].getColor(RubixState.faces.front) + RubixState.colors.orange + this.cubies[16].getColor(RubixState.faces.front) + newLine +
+                   space + this.cubies[17].getColor(RubixState.faces.front) + this.cubies[18].getColor(RubixState.faces.front) + this.cubies[19].getColor(RubixState.faces.front) + newLine +
     // Bottom
-                   "   " + this.cubies[17].getColor(RubixState.faces.bottom) + this.cubies[18].getColor(RubixState.faces.bottom) + this.cubies[19].getColor(RubixState.faces.bottom) + "\n" +
-                   "   " + this.cubies[8].getColor(RubixState.faces.bottom) + RubixState.colors.white + this.cubies[11].getColor(RubixState.faces.bottom) + "\n" +
-                   "   " + this.cubies[0].getColor(RubixState.faces.bottom) + this.cubies[1].getColor(RubixState.faces.bottom) + this.cubies[2].getColor(RubixState.faces.bottom);  
+                   space + this.cubies[17].getColor(RubixState.faces.bottom) + this.cubies[18].getColor(RubixState.faces.bottom) + this.cubies[19].getColor(RubixState.faces.bottom) + newLine +
+                   space + this.cubies[8].getColor(RubixState.faces.bottom) + RubixState.colors.white + this.cubies[11].getColor(RubixState.faces.bottom) + newLine +
+                   space + this.cubies[0].getColor(RubixState.faces.bottom) + this.cubies[1].getColor(RubixState.faces.bottom) + this.cubies[2].getColor(RubixState.faces.bottom);  
                
-    return rubixStr;        
+    return rubixStr;     
 };
 
 /**
@@ -128,7 +147,7 @@ RubixState.colors = {
 };
 
 /**
- * The cube's faces. Do not change; they must match the rotation map below for cubie face rotations.
+ * The cube's faces. They match the rotation map below for cubie face rotations.
  */
 RubixState.faces = {
     back : 0,
@@ -176,6 +195,7 @@ function Cubie(faces)
 {
     // The cubie's faces (2 for sides, 3 for corners)
     this.faces = faces.slice(0); // Copy array
+    this.colorId = this.getColorId();
 }
 
 /**
@@ -192,6 +212,25 @@ Cubie.prototype.rotate = function(face, rotations)
         
         this.faces[index].rotate(face, rotations);
     }
+};
+
+/**
+ * Returns an idenifier for this cubie based on its colors. Disregards position.
+ * @return an idenifier for this cubie
+ */
+Cubie.prototype.getColorId = function()
+{
+    var colors = [];
+    for (var index in this.faces)
+        colors.push(this.faces[index].color);
+    
+    colors.sort();
+    var id = "";
+
+    for (index in colors)
+        id += colors[index];
+    
+    return id;
 };
 
 /**

@@ -1,23 +1,78 @@
-body
+* 
 {
-    background-color:#AAAAAA;
-}
-div
-{
-    margin:auto;
-    width:30%;
-    text-align:center;
-
-
-}
-
-ul
-{
-    list-style-type:none;  
-    margin:auto;
+    margin: 0;
+    padding: 0;
 }
 
 a
 {
     text-decoration: none; 
+}
+
+body
+{
+    background-color: #DDD;
+    font-family: "Segoe UI", Tahoma, Arial, Verdana, sans-serif;
+}
+
+div#mainContent
+{
+    display: block;
+    margin: auto;
+    width: 800px;
+    text-align: center;
+}
+
+div#rubixCube
+{
+    display: block;
+    margin: 25px auto auto auto;
+    width: 373px;
+    height: 420px;
+    background-image: url("resources/rubix-cube.png");
+    background-repeat: no-repeat;
+    background-position: 50% 0px;
+}
+
+div#rubixShadow
+{
+    display: block;
+    margin: auto auto 10px auto;
+    width: 500px;
+    height: 50px;
+    background-image: url("resources/rubix-shadow.png");
+    background-repeat: no-repeat;
+    background-position: -12px 50%;
+}
+
+/* ---------- Menu ---------- */
+ul.menu
+{
+    display: block;
+    margin: auto;
+    padding: 10px;
+    width: 200px;
+    list-style-type: none;
+}
+
+ul.menu li
+{
+    padding-bottom: 8px;
+    background-image: url("resources/default-button.png");
+    background-repeat: no-repeat;
+}
+
+ul.menu li:hover
+{
+    background-image: url("resources/default-button-hover.png");
+}
+
+ul.menu li a
+{
+    display: table-cell;
+    width: 200px;
+    height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    color: black;
 }

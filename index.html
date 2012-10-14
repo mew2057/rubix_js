@@ -2,25 +2,29 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <meta name="authors"             content="Chris,John" />
+    <meta name="authors"            content="Chris,John" />
     <title>
         The hit puzzle suddenly in your browser!
     </title>
 
     <link rel="shortcut icon" type="image/png" href="resourcesfavicon.png">
-
     <link rel="stylesheet"  href="style.css" type="text/css" media="screen"/>
-    <script type="text/javascript" src="rubixStructures/rubixCube.js"></script>  
-
-
-
-
+    
+    <script type="text/javascript" src="control/jquery-1.8.2.min.js" /></script>
+    <script type="text/javascript" src="control/jquery-ui-1.8.23.custom.min.js" /></script>
+    
+    <script type="text/javascript" src="control/control.js" /></script>
+    <script type="text/javascript" src="rubixStructures/rubixCube.js"></script>
+    <script type="text/javascript" src="search/tableGenerator.js"></script>
 </head>
 
 <body>
-    <div>
+    <div id="mainContent">
+        <div id="rubixCube"></div>
+        <div id="rubixShadow"></div>
+        
         Welcome to the rubix cube solver! <br/>Please select how you wish to interface with this tool:
-        <ul>
+        <ul class="menu">
             <li><a href="index.html">Table Generator</a></li>
             <li><a href="index.html">Barebones Solver</a></li>
             <li><a href="rubixWGL.html">Fancy Solver</a></li>
