@@ -181,33 +181,33 @@ RubixState.initWithString = function(text)
         faces[face] = faces[face].split('');
     }
     
-    var goalState = new RubixState();
+    var tempState = new RubixState();
     
-    goalState.cubies = [
+    tempState.cubies = [
         // In order according to the representation below.
-        Cubie.create(faces[0][0], faces[5][6], faces[1][0]),
-        Cubie.create(faces[0][1], faces[5][7]),
-        Cubie.create(faces[0][2], faces[5][8], faces[3][2]),
-        Cubie.create(faces[0][3], faces[1][2]),
-        Cubie.create(faces[0][5], faces[3][1]),
-        Cubie.create(faces[0][6], faces[2][0], faces[1][2]),
-        Cubie.create(faces[0][7], faces[2][1]),
-        Cubie.create(faces[0][8], faces[2][2], faces[3][0]),
-        Cubie.create(faces[5][3], faces[1][3]),
-        Cubie.create(faces[2][3], faces[1][5]),
-        Cubie.create(faces[2][5], faces[3][3]),
-        Cubie.create(faces[5][5], faces[3][5]),
-        Cubie.create(faces[2][6], faces[4][0], faces[1][8]),
-        Cubie.create(faces[2][7], faces[4][1]),
-        Cubie.create(faces[2][8], faces[4][2], faces[3][6]),
-        Cubie.create(faces[4][3], faces[1][7]), 
-        Cubie.create(faces[4][5], faces[3][7]),
-        Cubie.create(faces[5][0], faces[4][6], faces[1][7]),
-        Cubie.create(faces[5][1], faces[4][7]),
-        Cubie.create(faces[5][2], faces[4][8], faces[3][8])
+        Cubie.create(faces[0][0], faces[5][6], faces[1][0],0, 5, 1),
+        Cubie.create(faces[0][1], faces[5][7], null, 0, 5),
+        Cubie.create(faces[0][2], faces[5][8], faces[3][2], 0, 5, 3),
+        Cubie.create(faces[0][3], faces[1][2], null, 0, 1),
+        Cubie.create(faces[0][5], faces[3][1], null, 0, 3),
+        Cubie.create(faces[0][6], faces[2][0], faces[1][2], 0, 2, 1),
+        Cubie.create(faces[0][7], faces[2][1], null, 0, 2),
+        Cubie.create(faces[0][8], faces[2][2], faces[3][0], 0, 2, 3),
+        Cubie.create(faces[5][3], faces[1][3], null, 5, 1),
+        Cubie.create(faces[2][3], faces[1][5], null, 2, 1),
+        Cubie.create(faces[2][5], faces[3][3], null, 2, 3),
+        Cubie.create(faces[5][5], faces[3][5], null, 5, 3),
+        Cubie.create(faces[2][6], faces[4][0], faces[1][8], 2, 4, 1),
+        Cubie.create(faces[2][7], faces[4][1], null, 2, 4),
+        Cubie.create(faces[2][8], faces[4][2], faces[3][6], 2, 4, 3),
+        Cubie.create(faces[4][3], faces[1][7], null, 4, 1), 
+        Cubie.create(faces[4][5], faces[3][7], null, 4, 3),
+        Cubie.create(faces[5][0], faces[4][6], faces[1][7], 5, 4, 1),
+        Cubie.create(faces[5][1], faces[4][7], null, 5, 4),
+        Cubie.create(faces[5][2], faces[4][8], faces[3][8], 5, 4, 3)
     ];
     
-    return goalState;
+    return tempState;
 };
 
 /**
@@ -233,6 +233,8 @@ RubixState.faces = {
     front : 4,
     bottom : 5
 };
+
+RubixState.faceValues = ['R','G','Y','B','O','W'];
 
 /**
  * This sets up the indicies in reference to a clockwise pattern. 
@@ -461,7 +463,6 @@ CubieFace.prototype.rotate = function(face, rotations)
     // Added a tenary operator to handle an undefined issue.
     this.face = CubieFace.newFaceMap[face][this.face]? 
         CubieFace.newFaceMap[face][this.face][rotations]:this.face;
-        console.log(this.face);
 };
 
 /**

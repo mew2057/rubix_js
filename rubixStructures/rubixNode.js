@@ -46,17 +46,11 @@ RubixNode.prototype.getSuccessors = function()
             // Create a new node with a copy of the data then rotate the state.
             tempNode = new RubixNode(this.rubixState.copy(), this, [i,j]);
             tempNode.rubixState.rotate(i,j);
-            
-            // If the derived state is valid return just that otherwise continue
-            // building the successors.
-            if(tempNode.rubixState.toString() === this.rubixState.toString())
-            {
-                return [tempNode];   
-            }
-            
+
             successors.push(tempNode);
         }   
     }    
+    
     return successors;
 };
 
