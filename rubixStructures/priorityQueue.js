@@ -85,7 +85,7 @@
         var element = contents[contents.length - 1];
 
         if(element) {
-          return element.object;
+          return element;
         } else {
           return undefined;
         }

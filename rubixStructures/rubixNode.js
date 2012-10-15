@@ -17,7 +17,7 @@ function RubixNode(state,parent,action)
     if(parent)
     {        
         this.depth = parent.depth+1;
-        this.totalPathCost = parent.totalPathCost+RubixNode.stepCost;
+        this.totalPathCost = parent.totalPathCost + RubixNode.stepCost;
     }
     else
     {
@@ -41,6 +41,11 @@ RubixNode.prototype.getSuccessors = function()
     // Record them.
     for(var i = 0; i < 6; i++)
     {
+        if(this.nodeAction && i == this.nodeAction[0])
+        {
+            continue;
+        }
+        
         for(var j = 1; j < 4; j++)
         {
             // Create a new node with a copy of the data then rotate the state.
@@ -53,6 +58,7 @@ RubixNode.prototype.getSuccessors = function()
     
     return successors;
 };
+
 
 RubixNode.prototype.compareTo = function(node)
 {

@@ -143,6 +143,9 @@ RubixState.initWithGoalState = function()
         Cubie.create(RubixState.colors.white, RubixState.colors.orange, RubixState.colors.blue)
     ];
     
+    for (var index in goalState.cubies)
+        goalState.cubies[index].faces.sort(function(a,b){return a.face - b.face;});
+    
     return goalState;
 };
 
@@ -188,7 +191,7 @@ RubixState.initWithString = function(text)
         Cubie.create(faces[0][0], faces[5][6], faces[1][0],0, 5, 1),
         Cubie.create(faces[0][1], faces[5][7], null, 0, 5),
         Cubie.create(faces[0][2], faces[5][8], faces[3][2], 0, 5, 3),
-        Cubie.create(faces[0][3], faces[1][2], null, 0, 1),
+        Cubie.create(faces[0][3], faces[1][1], null, 0, 1),
         Cubie.create(faces[0][5], faces[3][1], null, 0, 3),
         Cubie.create(faces[0][6], faces[2][0], faces[1][2], 0, 2, 1),
         Cubie.create(faces[0][7], faces[2][1], null, 0, 2),
@@ -202,10 +205,12 @@ RubixState.initWithString = function(text)
         Cubie.create(faces[2][8], faces[4][2], faces[3][6], 2, 4, 3),
         Cubie.create(faces[4][3], faces[1][7], null, 4, 1), 
         Cubie.create(faces[4][5], faces[3][7], null, 4, 3),
-        Cubie.create(faces[5][0], faces[4][6], faces[1][7], 5, 4, 1),
+        Cubie.create(faces[5][0], faces[4][6], faces[1][6], 5, 4, 1),
         Cubie.create(faces[5][1], faces[4][7], null, 5, 4),
         Cubie.create(faces[5][2], faces[4][8], faces[3][8], 5, 4, 3)
     ];
+    for (var index in tempState.cubies)
+        tempState.cubies[index].faces.sort(function(a,b){return a.face - b.face;});
     
     return tempState;
 };
@@ -291,6 +296,8 @@ Cubie.prototype.rotate = function(face, rotations)
         
         this.faces[index].rotate(face, rotations);
     }
+    
+    this.faces.sort(function(a,b){return a.face - b.face;});
 };
 
 /**
