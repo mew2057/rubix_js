@@ -49,13 +49,15 @@ RubixNode.prototype.getSuccessors = function()
         for(var j = 1; j < 4; j++)
         {
             // Create a new node with a copy of the data then rotate the state.
-            tempNode = new RubixNode(this.rubixState.copy(), this, [i,j]);
-            tempNode.rubixState.rotate(i,j);
+            tempNode = new RubixNode(RubixState.copy(this.rubixState), this, [i,j]);
+            
+            RubixState.rotate(tempNode.rubixState,i,j);
+//            console.log(RubixState.toString(tempNode.rubixState), RubixState.toString(this.rubixState),i,j);
 
             successors.push(tempNode);
         }   
     }    
-    
+
     return successors;
 };
 

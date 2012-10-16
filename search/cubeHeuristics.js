@@ -4,7 +4,7 @@
 
 function CubeHeuristics() {}
 
-CubeHeuristics.goalState = RubixState.initWithGoalState();
+CubeHeuristics.goalState = RubixState.createWithGoalState();
 
 CubeHeuristics.heuristic = function(rubixState)
 {

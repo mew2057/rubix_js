@@ -14,21 +14,21 @@ AStar.prototype.iterativeAStar = function(initialState)
     var sequence =[];
     var depth = 0;
     var goalNode = null;
-    console.log(initialState.toString(true));
+    console.log(RubixState.toString(initialState));
 
     for(var depth = 0; depth < 20; depth++)
     {
-        if(initialState.toString() === AStar.goalState.toString())
+        if(RubixState.isEqual(initialState,AStar.goalState))
         {
-            break;    
-        }  
-        
-        goalNode = this.iterativeAStarDepthLimted(new RubixNode(initialState),depth);
+            goalNode = initialState;
+        } 
+        else
+        {
+            goalNode = this.iterativeAStarDepthLimted(new RubixNode(initialState),depth);
+        }
         
         if(goalNode)
-        {
-            console.log(goalNode.rubixState.toString(true));
-            console.log("goal");
+        {           
             console.log(this.pathFromNode(goalNode));
             break;
         }
@@ -47,13 +47,12 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
     
     if(currentNode.depth == depth && this.frontier.size() === 0)
     {
-        return (currentNode.toString() === AStar.goalState.toString())?currentNode:null;
+        return RubixState.isEqual(currentNode.rubixState,AStar.goalState) ? currentNode : null;
     }
     
     var localNode = currentNode;
     var successors = null;
 
-    AStar.goalState
     do{
         successors = localNode.getSuccessors();
 
@@ -67,16 +66,15 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
             if(successors[index].depth != depth)
             {
                 this.frontier.push(successors[index],
-                    CubeHeuristics.heuristic(successors[index].rubixState) + 
+                    //CubeHeuristics.heuristic(successors[index].rubixState) + 
                     successors[index].totalPathCost);    
-                    
-                if( CubeHeuristics.heuristic(successors[index].rubixState) === 0)
+                return;
+               /* if( CubeHeuristics.heuristic(successors[index].rubixState) === 0)
                 {
                     console.log( CubeHeuristics.heuristic(successors[index].rubixState));
-                }
+                }*/
             }
-            else if (successors[index].rubixState.toString(false,false) 
-                === AStar.goalState.toString(false,false))
+            else if (RubixState.isEqual(successors[index].rubixState,AStar.goalState))
             {
                 return successors[index];   
             }
@@ -91,10 +89,10 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
         
         console.log("popped");
     }while(this.frontier.size() !== 0 && 
-        localNode.rubixState.toString(false,false) != AStar.goalState.toString(false,false));
+        !RubixState.isEqual(localNode.rubixState,AStar.goalState));
     
  
-    return localNode.rubixState.toString() === AStar.goalState.toString()?localNode: null;  
+    return RubixState.isEqual(localNode.rubixState,AStar.goalState) ?localNode: null;  
 };
 
 AStar.prototype.pathFromNode = function(node)
@@ -108,5 +106,9 @@ AStar.prototype.pathFromNode = function(node)
     {
         console.log(node);
         return RubixState.faceValues[node.nodeAction[0]] + ":" + node.nodeAction[1];
+    }
+    else
+    {
+        return "It was already solved!";
     }
 };
