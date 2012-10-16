@@ -12,7 +12,7 @@
 function RubixState()
 {
     //*=face +=color -=unused
-    //***-+++- 2 unused bits per face 2*20 = 40 40/8 = 5 bytes wasted per state. 
+    //-***-+++ 2 unused bits per face 2*20 = 40 40/8 = 5 bytes wasted per state. 
     // (48 bytes total [plus some overhead], pretty damn good).
     this.cubies = new Uint8Array(new ArrayBuffer(48));
     
@@ -100,17 +100,241 @@ RubixState.rotate = function(state, face, rotations)
 
 RubixState.rotateFace = function(faceState, face, rotations)
 {
-    var faceVal = Number(faceState >> 5);
-    var colorVal = faceState & 1110;
+    var faceVal = Number(faceState >> 4);
+    var colorVal = faceState & 7;
     
     if ( CubieFace.newFaceMap[face][faceVal])
     {
-        return (CubieFace.newFaceMap[face][faceVal][rotations] << 5) & colorVal;
+        return (CubieFace.newFaceMap[face][faceVal][rotations] << 5) | colorVal;
     }
     else 
     {
-        return faceVal;   
+        return faceState;   
     }
+};
+
+RubixState.createWithGoalState = function()
+{
+    // HAHAHAHAHA -John
+    return RubixState.createWithString("RRRRRRRRRGGGYYYBBBGGGYYYBBBGGGYYYBBBOOOOOOOOOWWWWWWWWW");
+};
+
+RubixState.createWithString = function(text)
+{
+     var faces = [];
+    
+    // Iterate over the input string to organize our data.
+    for(var index = 0, line= " ", length = text.length / 9; index <length; index++)
+    {
+        line = text.substring(index*9,index*9 + 9);
+        
+        // Switch on indices in a manner befitting of a boss.
+        switch(index)
+        {
+            case 1:
+                faces.push(line.substring(0,3));
+                faces.push(line.substring(3,6));
+                faces.push(line.substring(6,9));
+                break;
+            case 2 :
+            case 3 :
+                faces[1] += line.substring(0,3);
+                faces[2] += line.substring(3,6);
+                faces[3] += line.substring(6,9);
+                break;
+            default:
+                faces.push(line);
+                break;
+        }        
+    }
+    
+    for(var face in faces)
+    {
+        faces[face] = faces[face].split('');
+    }
+        
+    var state = new RubixState();
+    
+    /*
+             00 24 03
+             26 -R 28
+             06 30 09
+    02 27 08 07 31 10 11 29 05
+    33 -G 35 34 -Y 36 37 -B 39
+    14 41 17 15 42 18 20 45 23
+             16 43 19
+             40 -O 44
+             13 47 22
+             12 46 21
+             32 -W 38
+             01 25 04   
+    */
+    //c0
+    state.cubies[0]  = RubixState.createFace(faces[0][0],0);
+    state.cubies[1]  = RubixState.createFace(faces[5][6],5);
+    state.cubies[2]  = RubixState.createFace(faces[1][0],1);
+    
+    //c1
+    state.cubies[3]  = RubixState.createFace(faces[0][2],0);
+    state.cubies[4]  = RubixState.createFace(faces[5][8],5);
+    state.cubies[5]  = RubixState.createFace(faces[3][2],3);
+    
+    //c2
+    state.cubies[6]  = RubixState.createFace(faces[0][6],0);
+    state.cubies[7]  = RubixState.createFace(faces[2][0],2);
+    state.cubies[8]  = RubixState.createFace(faces[1][2],1);
+    
+    //c3
+    state.cubies[9]  = RubixState.createFace(faces[0][8],0);
+    state.cubies[10] = RubixState.createFace(faces[2][2],2);
+    state.cubies[11] = RubixState.createFace(faces[3][0],3);
+    
+    //c4
+    state.cubies[12] = RubixState.createFace(faces[5][0],5);
+    state.cubies[13] = RubixState.createFace(faces[4][6],4);
+    state.cubies[14] = RubixState.createFace(faces[1][6],1);
+    
+    //c5
+    state.cubies[15] = RubixState.createFace(faces[2][6],2);
+    state.cubies[16] = RubixState.createFace(faces[4][0],4);
+    state.cubies[17] = RubixState.createFace(faces[1][8],1);
+    
+    //c6
+    state.cubies[18] = RubixState.createFace(faces[2][8],2);
+    state.cubies[19] = RubixState.createFace(faces[4][2],4);
+    state.cubies[20] = RubixState.createFace(faces[3][6],3);   
+    
+    //c7
+    state.cubies[21] = RubixState.createFace(faces[5][2],5);
+    state.cubies[22] = RubixState.createFace(faces[4][8],4);
+    state.cubies[23] = RubixState.createFace(faces[3][8],3);
+    
+    //s0
+    state.cubies[24] = RubixState.createFace(faces[0][1],0);
+    state.cubies[25] = RubixState.createFace(faces[5][7],5);
+    
+    //s1
+    state.cubies[26] = RubixState.createFace(faces[0][3],0);
+    state.cubies[27] = RubixState.createFace(faces[1][1],1);
+    
+    //s2
+    state.cubies[28] = RubixState.createFace(faces[0][5],0);
+    state.cubies[29] = RubixState.createFace(faces[3][1],3);
+    
+    //s3
+    state.cubies[30] = RubixState.createFace(faces[0][7],0);
+    state.cubies[31] = RubixState.createFace(faces[2][1],2);
+    
+    //s4
+    state.cubies[32] = RubixState.createFace(faces[5][3],5);
+    state.cubies[33] = RubixState.createFace(faces[1][3],1);
+    
+    //s5
+    state.cubies[34] = RubixState.createFace(faces[2][3],2);
+    state.cubies[35] = RubixState.createFace(faces[1][5],1);
+    
+    //s6
+    state.cubies[36] = RubixState.createFace(faces[2][5],2);
+    state.cubies[37] = RubixState.createFace(faces[3][3],3);
+    
+    //s7
+    state.cubies[38] = RubixState.createFace(faces[5][5],5);
+    state.cubies[39] = RubixState.createFace(faces[3][5],3);
+    
+    //s8
+    state.cubies[40] = RubixState.createFace(faces[4][3],4);
+    state.cubies[41] = RubixState.createFace(faces[1][7],1);
+    
+    //s9
+    state.cubies[42] = RubixState.createFace(faces[2][7],2);
+    state.cubies[43] = RubixState.createFace(faces[4][1],4);
+        
+    //s10
+    state.cubies[44] = RubixState.createFace(faces[4][5],4);
+    state.cubies[45] = RubixState.createFace(faces[3][7],3);
+    
+    //s11
+    state.cubies[46] = RubixState.createFace(faces[5][1],5);
+    state.cubies[47] = RubixState.createFace(faces[4][7],4);
+    console.log(RubixState.toString(state));
+    return state;
+};
+
+//*=face +=color -=unused
+//-***-+++ 
+RubixState.createFace = function(color, face)
+{
+    var tempElement = 0;
+    var toAdd = 0;
+    
+    switch (color)
+    {
+        case 'R':
+            toAdd = 0;
+            break;
+        case 'G':
+            toAdd = 1;
+            break;
+        case 'Y':
+            toAdd = 2;
+            break;
+        case 'B':
+            toAdd = 3;
+            break;
+        case 'O':
+            toAdd = 4;
+            break;
+        case 'W':
+            toAdd = 5;
+            break;
+        default:
+            break;        
+    }
+    
+    return tempElement | (toAdd | (face << 4));   
+};
+
+RubixState.copy = function(state)
+{
+    
+};
+
+RubixState.faceValues = ['R','G','Y','B','O','W'];
+
+RubixState.colorID = function(face)
+{
+    return RubixState.faceValues[face & 7];
+};
+
+RubixState.toString = function(state)
+{
+    var output = '   ' + RubixState.colorID(state.cubies[0]) + RubixState.colorID(state.cubies[24]) + RubixState.colorID(state.cubies[3]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[26]) + 'R' + RubixState.colorID(state.cubies[28]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[6]) + RubixState.colorID(state.cubies[30]) + RubixState.colorID(state.cubies[9]) + '\n' +
+        
+        RubixState.colorID(state.cubies[2]) + RubixState.colorID(state.cubies[27]) + RubixState.colorID(state.cubies[8]) +
+        RubixState.colorID(state.cubies[7]) + RubixState.colorID(state.cubies[31]) + RubixState.colorID(state.cubies[10]) +
+        RubixState.colorID(state.cubies[11]) + RubixState.colorID(state.cubies[29]) + RubixState.colorID(state.cubies[5]) + '\n' + 
+        
+        RubixState.colorID(state.cubies[33]) + 'G' + RubixState.colorID(state.cubies[35]) +
+        RubixState.colorID(state.cubies[34]) + 'Y' + RubixState.colorID(state.cubies[36]) +
+        RubixState.colorID(state.cubies[37]) + 'B' + RubixState.colorID(state.cubies[39]) + '\n' + 
+        
+        RubixState.colorID(state.cubies[14]) + RubixState.colorID(state.cubies[41]) + RubixState.colorID(state.cubies[17]) +
+        RubixState.colorID(state.cubies[15]) + RubixState.colorID(state.cubies[42]) + RubixState.colorID(state.cubies[18]) +
+        RubixState.colorID(state.cubies[20]) + RubixState.colorID(state.cubies[45]) + RubixState.colorID(state.cubies[23]) + '\n' + 
+        
+        '   ' + RubixState.colorID(state.cubies[16]) + RubixState.colorID(state.cubies[43]) + RubixState.colorID(state.cubies[19]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[40]) + 'O' + RubixState.colorID(state.cubies[44]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[13]) + RubixState.colorID(state.cubies[47]) + RubixState.colorID(state.cubies[22]) + '\n' +
+        
+        '   ' + RubixState.colorID(state.cubies[12]) + RubixState.colorID(state.cubies[46]) + RubixState.colorID(state.cubies[21]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[32]) + 'W' + RubixState.colorID(state.cubies[38]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[1]) + RubixState.colorID(state.cubies[25]) + RubixState.colorID(state.cubies[4]) + '\n';
+        
+    return output;
+        
+    
 };
 
 
@@ -390,7 +614,6 @@ RubixState.initWithString = function(text)
 {
     var faces = [];
     
-
     // Iterate over the input string to organize our data.
     for(var index = 0, line= " ", length = text.length / 9; index <length; index++)
     {
@@ -465,7 +688,6 @@ RubixState.colors = {
 };
 
 
-RubixState.faceValues = ['R','G','Y','B','O','W'];
 
 /**
  * This sets up the indicies in reference to a clockwise pattern. 

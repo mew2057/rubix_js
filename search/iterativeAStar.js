@@ -2,7 +2,7 @@
     iterativeAStar.js    
     A script for running the IDA* algorithm described in korf's paper.
    ----------------*/
-AStar.goalState = RubixState.initWithGoalState();
+AStar.goalState = RubixState.createWithGoalState();
 
 function AStar()
 {
@@ -63,19 +63,7 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
         }               
         //console.log(successors.length);
         for (var index = 0; index< successors.length; index++)
-        {
-            /*
-            if(successors[index].rubixState.toString(false,false) 
-                === AStar.goalState.toString(false,false))
-            {
-           /* console.log(JSON.stringify(successors[index].rubixState));
-            console.log(JSON.stringify(AStar.goalState));
-            console.log( CubeHeuristics.heuristic(successors[index].rubixState));
-            console.log( CubeHeuristics.heuristic(AStar.goalState));
-
-                return successors[index];   
-            }*/
-            
+        {            
             if(successors[index].depth != depth)
             {
                 this.frontier.push(successors[index],
