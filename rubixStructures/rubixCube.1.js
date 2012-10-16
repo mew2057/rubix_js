@@ -90,10 +90,9 @@ RubixState.rotate = function(state, face, rotations)
         RubixState.colorSet.length = 0;
         RubixState.colorSet.length = 6;
         
-        RubixState.colorSet[state.cubies[newIndex] & 7] = newIndex;
-        RubixState.colorSet[state.cubies[newIndex + 1] & 7] = newIndex + 1;
-        RubixState.colorSet[state.cubies[newIndex + 2] & 7] = newIndex + 2;
-
+        RubixState.colorSet[state.cubies[newIndex] >> 4] = newIndex;
+        RubixState.colorSet[state.cubies[newIndex + 1] >> 4] = newIndex + 1;
+        RubixState.colorSet[state.cubies[newIndex + 2] >> 4] = newIndex + 2;
 
         for(offset = 0; offset < 3; offset++)
         {
@@ -108,8 +107,9 @@ RubixState.rotate = function(state, face, rotations)
         RubixState.colorSet.length = 6;
 
         
-        RubixState.colorSet[state.cubies[newIndex] & 7] = newIndex;
-        RubixState.colorSet[state.cubies[newIndex + 1] & 7] = newIndex + 1;
+        RubixState.colorSet[state.cubies[newIndex]>> 4] = newIndex;
+        RubixState.colorSet[state.cubies[newIndex + 1] >> 4] = newIndex + 1;
+
         
          for(offset = 3; offset < 5; offset++)
         {
@@ -524,4 +524,3 @@ RubixState.newFaceMap = {
         }
     }
 };
-

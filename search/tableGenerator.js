@@ -20,7 +20,9 @@ TableGenerator.generate = function()
 //        rots = Math.floor(Math.random() * 3 + 1);
 //    }
 
-    RubixState.rotate(rubix, 1,0);
+    RubixState.rotate(rubix, 0,1);
+    //console.log(RubixState.toString(rubix));
+
     RubixState.rotate(rubix, 5,1);
 
     
