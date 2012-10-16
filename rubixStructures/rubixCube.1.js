@@ -4,14 +4,6 @@
    Represents the Rubik's cube as a JavaScript object.
    ---------- */
 
-/*
-$(document).ready(function() {
-    var rubix = RubixState.initWithGoalState();
-    console.log(rubix.toString(true));
-    rubix.rotate(RubixState.faces.top, 1);
-    console.log(rubix.toString(true));
-});
-*/
 
 /**
  * A full representation of a single Rubik's cube state.
@@ -19,8 +11,253 @@ $(document).ready(function() {
  */
 function RubixState()
 {
-    this.cubies = new Array(20);
+    //*=face +=color -=unused
+    //***-+++- 2 unused bits per face 2*20 = 40 40/8 = 5 bytes wasted per state. 
+    // (48 bytes total [plus some overhead], pretty damn good).
+    this.cubies = new Uint8Array(new ArrayBuffer(48));
+    
+    
 }
+
+RubixState.scratchBuffer = new Uint8Array(new ArrayBuffer(20));
+
+/**
+ * The cube's faces. They match the rotation map below for cubie face rotations.
+ */
+RubixState.faces = {
+    back : 0,
+    left : 1,
+    top : 2,
+    right : 3,
+    front : 4,
+    bottom : 5
+};
+
+// The logic behind this still works and only one copy of this need exist.
+RubixState.sideLookUpTable = [
+    [ 0,24, 3,28, 9,30, 6,26], // red, back
+    [ 0,26, 6,34,15,40,12,32], // green, left
+    [ 6, 30,9,36,18,42,15,34], // yellow, top
+    [ 9,28, 3,38,21,44,18,36], // blue, right
+    [15,42,18,34,21,46,12,40], // orange, front    
+    [12,46,21,38, 3,24, 0,32]  // white, bottom
+];
+
+/**
+ * Calculations to reach each cubie
+ * 
+ * f(c) = c*3 +  0
+ * f(s) = s*2 + 24
+ * 
+ *             c00 s00 c01
+ *             s01  R  s02
+ *             c02 s03 c03
+ * c00 s01 c02 c02 s03 c03 c03 s02 c01
+ * s04  G  s05 s05  Y  s06 s06  B  s07
+ * c04 s08 c05 c05 s09 c06 c06 s10 c07
+ *             c05 s09 c06 
+ *             s08  O  s10 
+ *             c04 s11 c07
+ *             c04 s11 c07
+ *             s04  W  s07
+ *             c00 s00 c01
+*/
+RubixState.rotate = function(state, face, rotations)
+{
+    var indicies =  RubixState.sideLookUpTable[face];
+    var cubie, size,newIndex,offset, cFace;
+    
+    for(var index in indicies)
+    {
+        cubie = indicies[index];
+        size = cubie >=24 ? 2 : 3;
+        
+        for(cFace = 0; cFace < size; cFace++)
+        {
+            RubixState.scratchBuffer[index+cFace] = RubixState.rotateFace(
+                state.cubies[cubie+cFace], face, rotations);   
+        }
+    }
+    
+    //3,2, 3,2, 3,2, 3,2    
+    for (index = 0; index < RubixState.scratchBuffer.length; index+=2)
+    {
+        newIndex = indicies[(index + (2 * rotations)) % 8];
+        
+        for(offset = 0; offset < 3; offset++)
+        {
+            state.cubies[newIndex + offset] = RubixState.scratchBuffer[index * 5 + offset];
+        }
+        
+        newIndex = indicies[(index + 1 + (2 * rotations)) % 8];
+        
+        for(offset = 0; offset < 2; offset++)
+        {
+            state.cubies[newIndex + offset] = RubixState.scratchBuffer[index * 5 + offset + 3];
+        }
+    }
+};
+
+RubixState.rotateFace = function(faceState, face, rotations)
+{
+    var faceVal = Number(faceState >> 5);
+    var colorVal = faceState & 1110;
+    
+    if ( CubieFace.newFaceMap[face][faceVal])
+    {
+        return (CubieFace.newFaceMap[face][faceVal][rotations] << 5) & colorVal;
+    }
+    else 
+    {
+        return faceVal;   
+    }
+};
+
+
+/**
+ * Given the cube's rotating face, a cubie face's current face, and 1 to 3 rotations, this map
+ * defines the new face for a cubie face. 
+ * 
+ * Usage: CubieFace.newFaceMap[rotating face][current cubie face's face][number of rotations]
+ * 
+ * There's probably a better way to do this...
+ */
+CubieFace.newFaceMap = {
+    0 : {
+        1 : {
+            1 : 5,
+            2 : 3,
+            3 : 2
+        },
+        2 : {
+            1 : 1,
+            2 : 5,
+            3 : 3
+        },
+        3 : {
+            1 : 2,
+            2 : 1,
+            3 : 5
+        },
+        5 : {
+            1 : 3,
+            2 : 2,
+            3 : 1
+        }
+    },
+    1 : {
+        0 : {
+            1 : 2,
+            2 : 4,
+            3 : 5
+        },
+        2 : {
+            1 : 4,
+            2 : 5,
+            3 : 0
+        },
+        4 : {
+            1 : 5,
+            2 : 0,
+            3 : 2
+        },
+        5 : {
+            1 : 0,
+            2 : 2,
+            3 : 4
+        }
+    },
+    2 : {
+        0 : {
+            1 : 3,
+            2 : 4,
+            3 : 1
+        },
+        1 : {
+            1 : 0,
+            2 : 3,
+            3 : 4
+        },
+        3 : {
+            1 : 4,
+            2 : 1,
+            3 : 0
+        },
+        4 : {
+            1 : 1,
+            2 : 0,
+            3 : 3
+        }
+    },
+    3 : {
+        0 : {
+            1 : 5,
+            2 : 4,
+            3 : 2
+        },
+        2 : {
+            1 : 0,
+            2 : 5,
+            3 : 4
+        },
+        4 : {
+            1 : 2,
+            2 : 0,
+            3 : 5
+        },
+        5 : {
+            1 : 4,
+            2 : 2,
+            3 : 0
+        }
+    },
+    4 : {
+        1 : {
+            1 : 2,
+            2 : 3,
+            3 : 5
+        },
+        2 : {
+            1 : 3,
+            2 : 5,
+            3 : 1
+        },
+        3 : {
+            1 : 5,
+            2 : 1,
+            3 : 2
+        },
+        5 : {
+            1 : 1,
+            2 : 2,
+            3 : 3
+        }
+    },
+    5 : {
+        0 : {
+            1 : 1,
+            2 : 4,
+            3 : 3
+        },
+        1 : {
+            1 : 4,
+            2 : 3,
+            3 : 0
+        },
+        3 : {
+            1 : 0,
+            2 : 1,
+            3 : 4
+        },
+        4 : {
+            1 : 3,
+            2 : 0,
+            3 : 1
+        }
+    }
+};
+
+//--------------------------------------------------------------------------------------
 
 /**
  * Rotates the cube 1 to 3 rotations in the clockwise direction given the face.
@@ -227,17 +464,6 @@ RubixState.colors = {
     white : "W"
 };
 
-/**
- * The cube's faces. They match the rotation map below for cubie face rotations.
- */
-RubixState.faces = {
-    back : 0,
-    left : 1,
-    top : 2,
-    right : 3,
-    front : 4,
-    bottom : 5
-};
 
 RubixState.faceValues = ['R','G','Y','B','O','W'];
 
@@ -259,7 +485,7 @@ RubixState.faceValues = ['R','G','Y','B','O','W'];
  *           17 18 19
  *           08 Wh 11
  *           00 01 02
- */
+ *
 RubixState.sideLookUpTable = [
     [ 7, 6, 5, 3, 0, 1, 2, 4], // red, back
     [ 5, 9,12,15,17, 8, 0, 3], // green, left
@@ -267,7 +493,7 @@ RubixState.sideLookUpTable = [
     [14,10, 7, 4, 2,11,19,16], // blue, right
     [12,13,14,16,19,18,17,15], // orange, front
     [17,18,19,11, 2, 1, 0, 8]  // white, bottom
-];
+];*/
 
 
 /**
@@ -480,145 +706,4 @@ CubieFace.prototype.copy = function()
     return new CubieFace(this.color, this.face);
 };
 
-/**
- * Given the cube's rotating face, a cubie face's current face, and 1 to 3 rotations, this map
- * defines the new face for a cubie face. 
- * 
- * Usage: CubieFace.newFaceMap[rotating face][current cubie face's face][number of rotations]
- * 
- * There's probably a better way to do this...
- */
-CubieFace.newFaceMap = {
-    0 : {
-        1 : {
-            1 : 5,
-            2 : 3,
-            3 : 2
-        },
-        2 : {
-            1 : 1,
-            2 : 5,
-            3 : 3
-        },
-        3 : {
-            1 : 2,
-            2 : 1,
-            3 : 5
-        },
-        5 : {
-            1 : 3,
-            2 : 2,
-            3 : 1
-        }
-    },
-    1 : {
-        0 : {
-            1 : 2,
-            2 : 4,
-            3 : 5
-        },
-        2 : {
-            1 : 4,
-            2 : 5,
-            3 : 0
-        },
-        4 : {
-            1 : 5,
-            2 : 0,
-            3 : 2
-        },
-        5 : {
-            1 : 0,
-            2 : 2,
-            3 : 4
-        }
-    },
-    2 : {
-        0 : {
-            1 : 3,
-            2 : 4,
-            3 : 1
-        },
-        1 : {
-            1 : 0,
-            2 : 3,
-            3 : 4
-        },
-        3 : {
-            1 : 4,
-            2 : 1,
-            3 : 0
-        },
-        4 : {
-            1 : 1,
-            2 : 0,
-            3 : 3
-        }
-    },
-    3 : {
-        0 : {
-            1 : 5,
-            2 : 4,
-            3 : 2
-        },
-        2 : {
-            1 : 0,
-            2 : 5,
-            3 : 4
-        },
-        4 : {
-            1 : 2,
-            2 : 0,
-            3 : 5
-        },
-        5 : {
-            1 : 4,
-            2 : 2,
-            3 : 0
-        }
-    },
-    4 : {
-        1 : {
-            1 : 2,
-            2 : 3,
-            3 : 5
-        },
-        2 : {
-            1 : 3,
-            2 : 5,
-            3 : 1
-        },
-        3 : {
-            1 : 5,
-            2 : 1,
-            3 : 2
-        },
-        5 : {
-            1 : 1,
-            2 : 2,
-            3 : 3
-        }
-    },
-    5 : {
-        0 : {
-            1 : 1,
-            2 : 4,
-            3 : 3
-        },
-        1 : {
-            1 : 4,
-            2 : 3,
-            3 : 0
-        },
-        3 : {
-            1 : 0,
-            2 : 1,
-            3 : 4
-        },
-        4 : {
-            1 : 3,
-            2 : 0,
-            3 : 1
-        }
-    }
-};
+

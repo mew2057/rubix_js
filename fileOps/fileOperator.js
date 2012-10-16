@@ -25,6 +25,9 @@ FileOperator.init = function()
 
     window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
        
+    this.corners = new Uint32Array(new ArrayBuffer(32));
+    this.sides = new Uint16Array(new ArrayBuffer(24));
+       
     window.addEventListener("drop",FileOperator.operator.drop);
     window.addEventListener("dragEnter",FileOperator.operator.nullEffects);    
 };
