@@ -2,8 +2,7 @@
     RubixNode.js
    --------------*/
 
-//Each step only takes one move
-RubixNode.stepCost = 1; 
+
 
 //TODO add heuristic calculation to this.
 function RubixNode(state,parent,action)
@@ -16,22 +15,24 @@ function RubixNode(state,parent,action)
     
     if(parent)
     {        
-        this.depth = parent.depth+1;
-        this.totalPathCost = parent.totalPathCost + RubixNode.stepCost;
+        this.depth = parent.depth + 1;
+        this.fn = CubeHeuristics.heuristic(this.rubixState) + this.depth;
     }
     else
     {
-        this.depth = this.totalPathCost = 0;
+        this.depth = 0;
+        this.fn = CubeHeuristics.heuristic(this.rubixState);
     }
 }
 
 /**
  * Retrieves and generates nodes for all possible states that may follow the 
  * invoking node's state.
+ * @param node The node to retrieve successors for.
  * @return The array of successors for the rubix cube, if a solution is found 
  *         within the array return the solution alone in an array.
  */
-RubixNode.prototype.getSuccessors = function()
+RubixNode.getSuccessors = function(node)
 {
     //Initialize placeholders
     var successors = [];
@@ -41,7 +42,7 @@ RubixNode.prototype.getSuccessors = function()
     // Record them.
     for(var i = 0; i < 6; i++)
     {
-        if(this.nodeAction && i === this.nodeAction >> 4)
+        if(node.nodeAction && i === node.nodeAction >> 4)
         {
             continue;
         }
@@ -49,7 +50,7 @@ RubixNode.prototype.getSuccessors = function()
         for(var j = 1; j < 4; j++)
         {
             // Create a new node with a copy of the data then rotate the state.
-            tempNode = new RubixNode(RubixState.copy(this.rubixState), this, [i,j]);
+            tempNode = new RubixNode(RubixState.copy(node.rubixState), node, [i,j]);
             
             RubixState.rotate(tempNode.rubixState,i,j);
 
@@ -59,11 +60,3 @@ RubixNode.prototype.getSuccessors = function()
 
     return successors;
 };
-
-
-RubixNode.prototype.compareTo = function(node)
-{
-    return this.totalPathCost - node.totalPathCost;
-};
-
-

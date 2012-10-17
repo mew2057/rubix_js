@@ -14,9 +14,11 @@ AStar.prototype.iterativeAStar = function(initialState)
     var sequence ="";
     var depth = 0;
     var goalNode = null;
-    console.log(RubixState.toString(initialState));
+    var initialNode = new RubixNode(initialState);
+    
+    depth = initialNode.fn;
 
-    for(var depth = 0; depth < 20; depth++)
+    while(!goalNode)
     {
         if(RubixState.isEqual(initialState,AStar.goalState))
         {
@@ -27,17 +29,13 @@ AStar.prototype.iterativeAStar = function(initialState)
             goalNode = this.iterativeAStarDepthLimted(new RubixNode(initialState),depth);
         }
         
-        if(goalNode)
-        {           
-            console.log(this.pathFromNode(goalNode));
-            sequence =this.pathFromNode(goalNode);
-            break;
-        }
-        else{
-            console.log("The depth steadily increased.");
-   
-        }
+        depth ++;
+        
+        console.log("The depth steadily increased:" + depth);
     }
+    
+    console.log(this.pathFromNode(goalNode));
+    sequence =this.pathFromNode(goalNode);
 
     return sequence;
 };
@@ -46,7 +44,7 @@ AStar.prototype.iterativeAStar = function(initialState)
 AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
 {      
     
-    if(currentNode.depth == depth && this.frontier.size() === 0)
+    if(currentNode.fn == depth && this.frontier.size() === 0)
     {
         return RubixState.isEqual(currentNode.rubixState,AStar.goalState) ? currentNode : null;
     }
@@ -55,20 +53,19 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
     var successors = null;
 
     do{
-        successors = localNode.getSuccessors();
-
-        if(successors.length == 1)
+        
+        if(localNode.fn < depth)
         {
-            return successors[0];
-        }               
-        //console.log(successors.length);
-        for (var index = 0; index< successors.length; index++)
-        {            
-            if(successors[index].depth != depth)
-            {
-                this.frontier.push(successors[index],
-                    //CubeHeuristics.heuristic(successors[index].rubixState) + 
-                    successors[index].totalPathCost);    
+            successors = RubixNode.getSuccessors(localNode);
+
+                
+            for (var index = 0; index< successors.length; index++)
+            {            
+                if(successors[index].fn <= depth)
+                {
+                    this.frontier.push(successors[index],
+                        successors[index].fn);    
+                }
             }
         }
         
