@@ -68,15 +68,6 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
                 this.frontier.push(successors[index],
                     //CubeHeuristics.heuristic(successors[index].rubixState) + 
                     successors[index].totalPathCost);    
-                return;
-               /* if( CubeHeuristics.heuristic(successors[index].rubixState) === 0)
-                {
-                    console.log( CubeHeuristics.heuristic(successors[index].rubixState));
-                }*/
-            }
-            else if (RubixState.isEqual(successors[index].rubixState,AStar.goalState))
-            {
-                return successors[index];   
             }
         }
         
@@ -99,12 +90,10 @@ AStar.prototype.pathFromNode = function(node)
 {
     if(node.depth > 1)
     {
-        console.log(node);
         return this.pathFromNode(node.parentNode) + ", " + RubixState.faceValues[node.nodeAction[0]] + ":" + node.nodeAction[1];
     }
     else if (node.depth === 1) 
     {
-        console.log(node);
         return RubixState.faceValues[node.nodeAction[0]] + ":" + node.nodeAction[1];
     }
     else

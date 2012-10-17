@@ -20,14 +20,16 @@ TableGenerator.generate = function()
 //        rots = Math.floor(Math.random() * 3 + 1);
 //    }
 
-    RubixState.rotate(rubix, 0,1);
+    RubixState.rotate(rubix, 2,1);
     //console.log(RubixState.toString(rubix));
 
-    RubixState.rotate(rubix, 5,1);
+    //RubixState.rotate(rubix, 5,1);
 
     
     console.log(RubixState.toString(CubeHeuristics.goalState));
     console.log(RubixState.toString(rubix));
+    
+    console.log(RubixState.hash(CubeHeuristics.goalState));
     
     //console.log(CubeHeuristics.manhattanDistanceOfSides(rubix) + ":" + 
     //            CubeHeuristics.manhattanDistanceOfCorners(rubix));

@@ -3,157 +3,209 @@
    
    Represents the Rubik's cube as a JavaScript object.
    ---------- */
-
-/*
-$(document).ready(function() {
-    var rubix = RubixState.initWithGoalState();
-    console.log(rubix.toString(true));
-    rubix.rotate(RubixState.faces.top, 1);
-    console.log(rubix.toString(true));
-});
-*/
-
 /**
  * A full representation of a single Rubik's cube state.
  * @return a default Rubik's state (i.e. an array of 20 undefined cubies)
  */
 function RubixState()
 {
-    this.cubies = new Array(20);
+    //*=face +=color -=unused
+    //-***-+++ 2 unused bits per face 2*20 = 40 40/8 = 5 bytes wasted per state. 
+    // (48 bytes total [plus some overhead], pretty damn good).
+    this.cubies = null;   
+    
 }
 
 /**
- * Rotates the cube 1 to 3 rotations in the clockwise direction given the face.
- * @param {number} face the face of the cube to rotate
- * @param {number} rotations the number of rotations
+ * The scratch buffer for rotations. This reduces the number of times we have to 
+ * create a temporary buffer.
  */
-RubixState.prototype.rotate = function(face, rotations)
+RubixState.scratchBuffer = new Uint8Array(new ArrayBuffer(20));
+
+/**
+ * A scratch array used in face rotations.
+ */
+RubixState.faceSet =[];
+
+/**
+ * The cube's faces. They match the rotation map below for cubie face rotations.
+ */
+RubixState.faces = {
+    back : 0,
+    left : 1,
+    top : 2,
+    right : 3,
+    front : 4,
+    bottom : 5
+};
+
+/**
+ * The face value map used in tanslating moves to something human readable. 
+ */
+RubixState.faceValues = ['R','G','Y','B','O','W'];
+
+/**
+ * Defines cubie locations for a side.
+ */
+RubixState.sideLookUpTable = [
+    [ 0,24, 3,28, 9,30, 6,26], // red, back
+    [ 0,26, 6,34,15,40,12,32], // green, left
+    [ 6, 30,9,36,18,42,15,34], // yellow, top
+    [ 9,28, 3,38,21,44,18,36], // blue, right
+    [15,42,18,44,21,46,12,40], // orange, front    
+    [12,46,21,38, 3,24, 0,32]  // white, bottom
+];
+
+
+/**
+ * Handles face rotations. 
+ * Calculations to reach each cubie
+ * 
+ * f(c) = c*3 +  0
+ * f(s) = s*2 + 24
+ * 
+ *             c00 s00 c01
+ *             s01  R  s02
+ *             c02 s03 c03
+ * c00 s01 c02 c02 s03 c03 c03 s02 c01
+ * s04  G  s05 s05  Y  s06 s06  B  s07
+ * c04 s08 c05 c05 s09 c06 c06 s10 c07
+ *             c05 s09 c06 
+ *             s08  O  s10 
+ *             c04 s11 c07
+ *             c04 s11 c07
+ *             s04  W  s07
+ *             c00 s00 c01
+ * 
+ * @param state The state that is to be changed.
+ * @param face The face that the rotation occurs on.
+ * @param rotations The number of clockwise rotations for the action.
+*/
+RubixState.rotate = function(state, face, rotations)
 {
-    var indicies = RubixState.sideLookUpTable[face];
+    // The inidicies define the rotation behavior.
+    var indicies =  RubixState.sideLookUpTable[face];
     
-    var tempCubies = [], newIndex, index;
+    /*
+     * cubie - holds the cubie index.
+     * size - A generic size variable.
+     * newIndex - Holds a modified index.
+     * cFace - A cubieFace.
+     * offset - A generic offset variable.
+    */
+    var cubie, size, newIndex, cFace, offset;
     
-    for (index = 0; index < indicies.length; index++)
+    // Iterate over the indicies and calculate values of the rotated cubies.
+    for(var index  = 0, scratchIndex =0; index < indicies.length; index ++)
     {
-        tempCubies[indicies[index]] = this.cubies[indicies[index]];
-        tempCubies[indicies[index]].rotate(face, rotations);
+        // Keep track of the cubie location. If it is a side (loc >= 24) size is 2 else 4
+        cubie = indicies[index];
+        size = cubie >=24 ? 2 : 3;
+        
+        // For the number of faces calculate individual face rotations and add them to our scratch.
+        for(cFace = 0; cFace < size; cFace++)
+        {
+             RubixState.scratchBuffer[scratchIndex++] = RubixState.rotateFace(
+                state.cubies[cubie+cFace], face, rotations);   
+        }
     }
     
-    for (index = 0; index < indicies.length; index++)
+    // For each cubie shift the face data to the appropriate location in the buffer.
+    // This is done in increments of Corner,Side 4 times.
+    for (index = 0, size = indicies.length; index < size; index+=2)
     {
-        newIndex = (index + (2 * rotations)) % 8;
-        this.cubies[indicies[newIndex]] = tempCubies[indicies[index]];
+        // Calculate the index of the new cubie index after rotation.
+        newIndex = indicies[(index + (2 * rotations)) % 8];
+        
+        // Clear the face set of data.
+        RubixState.faceSet.length = 0;
+        RubixState.faceSet.length = 6;
+        
+        // Determine the face of each of the new buffer locations and load the 
+        // new index in the appropriate position. This maps face to memory location.
+        RubixState.faceSet[state.cubies[newIndex] >> 4] = newIndex;
+        RubixState.faceSet[state.cubies[newIndex + 1] >> 4] = newIndex + 1;
+        RubixState.faceSet[state.cubies[newIndex + 2] >> 4] = newIndex + 2;
+
+        // Place the cubie face data in the new position.
+        for(offset = 0; offset < 3; offset++)
+        {
+            cFace = RubixState.scratchBuffer[index * 5/2 +offset];
+            
+            state.cubies[RubixState.faceSet[cFace >> 4]] = cFace;
+        }
+        
+        // See above.
+        newIndex = indicies[(index + 1 + (2 * rotations)) % 8];
+        
+        RubixState.faceSet.length = 0;
+        RubixState.faceSet.length = 6;
+        
+        RubixState.faceSet[state.cubies[newIndex]>> 4] = newIndex;
+        RubixState.faceSet[state.cubies[newIndex + 1] >> 4] = newIndex + 1;
+        
+         for(offset = 3; offset < 5; offset++)
+        {
+            cFace = RubixState.scratchBuffer[index * 5/2 + offset];
+            
+            state.cubies[RubixState.faceSet[cFace >> 4]] = cFace;
+        }
     }
 };
 
 /**
- * Finds and returns the index of the given cubie on this cube state.
- * @return the index of the given cubie.
+ * Rotates a face with some boolean magic.
+ * 
+ * @param faceState The Uint8 number representing the cubie face.
+ * @param face The face that the rotation is occuring about [0-5].
+ * @param rotations The number of counterclockwise rotations [1-3].
+ * @return A Uint8 with the following bit pattern: -***-+++ where:
+ *  - : null 
+ *  + : color
+ *  * : face
  */
-RubixState.prototype.findCubie = function(cubie)
+RubixState.rotateFace = function(faceState, face, rotations)
 {
-    for (var index = 0; index < this.cubies.length; index++)
+    // Shift right to get the value of the leading for bits.
+    var faceVal = Number(faceState >> 4);
+    
+    // Mask with 00000111 to retrieve the color from the faceState.
+    var colorVal = faceState & 7;
+
+    // If the mapping of face rotations is valid perform it, 
+    // else it must be unaffected at this phase.
+    if ( RubixState.newFaceMap[face][faceVal])
     {
-        if (cubie.colorId() === this.cubies[index].colorId())
-            return index;
+        return (RubixState.newFaceMap[face][faceVal][rotations] << 4) | colorVal;
     }
-    
-    // Should not get here.
-    throw "Cubie not found: Invalid cubie";
+    else 
+    {
+        return faceState;   
+    }
 };
 
 /**
- * Returns a copy of this state.
- * @return a copy of this state
+ * Creates a Rubik cube with the goal state.
  */
-RubixState.prototype.copy = function()
+RubixState.createWithGoalState = function()
 {
-    var copy = new RubixState();
-    for (var index in this.cubies)
-        copy.cubies[index] = this.cubies[index].copy();
-    return copy;
+    // HAHAHAHAHA #JohnDidn'tFeelLikeWritingASeparateInitializer
+    return RubixState.createWithString("RRRRRRRRRGGGYYYBBBGGGYYYBBBGGGYYYBBBOOOOOOOOOWWWWWWWWW");
 };
 
 /**
- * Converts this cube to a formatted string. 
- * @return the cube represented as a string
+ * Creates a Rubik Cube from an upper case String of characters from a string 
+ * from the alphabet: {R,G,Y,B,O,W}.
+ * 
+ * @param text The textual representation of the rubik cube as specified in the 
+ *      assignment.
+ * @return A state for the supplied text.
  */
-RubixState.prototype.toString = function(spaces)
+RubixState.createWithString = function(text)
 {
-    var newLine = spaces ? "\n" : "";
-    var space = spaces ? "   " : "";
-    
-    // Back
-    var rubixStr = space + this.cubies[0].getColor(RubixState.faces.back) + this.cubies[1].getColor(RubixState.faces.back) + this.cubies[2].getColor(RubixState.faces.back) + newLine +
-                   space + this.cubies[3].getColor(RubixState.faces.back) + RubixState.colors.red + this.cubies[4].getColor(RubixState.faces.back) + newLine +
-                   space + this.cubies[5].getColor(RubixState.faces.back) + this.cubies[6].getColor(RubixState.faces.back) + this.cubies[7].getColor(RubixState.faces.back) + newLine +
-    // Left Top Right, 1st row
-                   this.cubies[0].getColor(RubixState.faces.left) + this.cubies[3].getColor(RubixState.faces.left) + this.cubies[5].getColor(RubixState.faces.left) + 
-                   this.cubies[5].getColor(RubixState.faces.top) + this.cubies[6].getColor(RubixState.faces.top) + this.cubies[7].getColor(RubixState.faces.top) + 
-                   this.cubies[7].getColor(RubixState.faces.right) + this.cubies[4].getColor(RubixState.faces.right) + this.cubies[2].getColor(RubixState.faces.right) + newLine +
-    // Left Top Right, 2nd row
-                   this.cubies[8].getColor(RubixState.faces.left) + RubixState.colors.green + this.cubies[9].getColor(RubixState.faces.left) + 
-                   this.cubies[9].getColor(RubixState.faces.top) + RubixState.colors.yellow + this.cubies[10].getColor(RubixState.faces.top) + 
-                   this.cubies[10].getColor(RubixState.faces.right) + RubixState.colors.blue + this.cubies[11].getColor(RubixState.faces.right) + newLine +
-    // Left Top Right, 3rd row
-                   this.cubies[17].getColor(RubixState.faces.left) + this.cubies[15].getColor(RubixState.faces.left) + this.cubies[12].getColor(RubixState.faces.left) + 
-                   this.cubies[12].getColor(RubixState.faces.top) + this.cubies[13].getColor(RubixState.faces.top) + this.cubies[14].getColor(RubixState.faces.top) + 
-                   this.cubies[14].getColor(RubixState.faces.right) + this.cubies[16].getColor(RubixState.faces.right) + this.cubies[19].getColor(RubixState.faces.right) + newLine +
-    // Front
-                   space + this.cubies[12].getColor(RubixState.faces.front) + this.cubies[13].getColor(RubixState.faces.front) + this.cubies[14].getColor(RubixState.faces.front) + newLine +
-                   space + this.cubies[15].getColor(RubixState.faces.front) + RubixState.colors.orange + this.cubies[16].getColor(RubixState.faces.front) + newLine +
-                   space + this.cubies[17].getColor(RubixState.faces.front) + this.cubies[18].getColor(RubixState.faces.front) + this.cubies[19].getColor(RubixState.faces.front) + newLine +
-    // Bottom
-                   space + this.cubies[17].getColor(RubixState.faces.bottom) + this.cubies[18].getColor(RubixState.faces.bottom) + this.cubies[19].getColor(RubixState.faces.bottom) + newLine +
-                   space + this.cubies[8].getColor(RubixState.faces.bottom) + RubixState.colors.white + this.cubies[11].getColor(RubixState.faces.bottom) + newLine +
-                   space + this.cubies[0].getColor(RubixState.faces.bottom) + this.cubies[1].getColor(RubixState.faces.bottom) + this.cubies[2].getColor(RubixState.faces.bottom);  
-               
-    return rubixStr;     
-};
-
-/**
- * Returns a new Rubik's cube state set up as the goal state.
- * @return a new Rubik's cube state set up as the goal state
- */
-RubixState.initWithGoalState = function()
-{
-    var goalState = new RubixState();
-    
-    goalState.cubies = [
-        // In order according to the representation below.
-        Cubie.create(RubixState.colors.red, RubixState.colors.white, RubixState.colors.green),
-        Cubie.create(RubixState.colors.red, RubixState.colors.white),
-        Cubie.create(RubixState.colors.red, RubixState.colors.white, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.red, RubixState.colors.green),
-        Cubie.create(RubixState.colors.red, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.red, RubixState.colors.yellow, RubixState.colors.green),
-        Cubie.create(RubixState.colors.red, RubixState.colors.yellow),
-        Cubie.create(RubixState.colors.red, RubixState.colors.yellow, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.white, RubixState.colors.green),
-        Cubie.create(RubixState.colors.yellow, RubixState.colors.green),
-        Cubie.create(RubixState.colors.yellow, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.white, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.yellow, RubixState.colors.orange, RubixState.colors.green),
-        Cubie.create(RubixState.colors.yellow, RubixState.colors.orange),
-        Cubie.create(RubixState.colors.yellow, RubixState.colors.orange, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.orange, RubixState.colors.green),
-        Cubie.create(RubixState.colors.orange, RubixState.colors.blue),
-        Cubie.create(RubixState.colors.white, RubixState.colors.orange, RubixState.colors.green),
-        Cubie.create(RubixState.colors.white, RubixState.colors.orange),
-        Cubie.create(RubixState.colors.white, RubixState.colors.orange, RubixState.colors.blue)
-    ];
-    
-    for (var index in goalState.cubies)
-        goalState.cubies[index].faces.sort(function(a,b){return a.face - b.face;});
-    
-    return goalState;
-};
-
-RubixState.initWithString = function(text)
-{
+    // An array to hold the intermediate state.
     var faces = [];
     
-
     // Iterate over the input string to organize our data.
     for(var index = 0, line= " ", length = text.length / 9; index <length; index++)
     {
@@ -179,305 +231,358 @@ RubixState.initWithString = function(text)
         }        
     }
     
+    // Splits the strings into character arrays.
     for(var face in faces)
     {
         faces[face] = faces[face].split('');
     }
-    
-    var tempState = new RubixState();
-    
-    tempState.cubies = [
-        // In order according to the representation below.
-        Cubie.create(faces[0][0], faces[5][6], faces[1][0],0, 5, 1),
-        Cubie.create(faces[0][1], faces[5][7], null, 0, 5),
-        Cubie.create(faces[0][2], faces[5][8], faces[3][2], 0, 5, 3),
-        Cubie.create(faces[0][3], faces[1][1], null, 0, 1),
-        Cubie.create(faces[0][5], faces[3][1], null, 0, 3),
-        Cubie.create(faces[0][6], faces[2][0], faces[1][2], 0, 2, 1),
-        Cubie.create(faces[0][7], faces[2][1], null, 0, 2),
-        Cubie.create(faces[0][8], faces[2][2], faces[3][0], 0, 2, 3),
-        Cubie.create(faces[5][3], faces[1][3], null, 5, 1),
-        Cubie.create(faces[2][3], faces[1][5], null, 2, 1),
-        Cubie.create(faces[2][5], faces[3][3], null, 2, 3),
-        Cubie.create(faces[5][5], faces[3][5], null, 5, 3),
-        Cubie.create(faces[2][6], faces[4][0], faces[1][8], 2, 4, 1),
-        Cubie.create(faces[2][7], faces[4][1], null, 2, 4),
-        Cubie.create(faces[2][8], faces[4][2], faces[3][6], 2, 4, 3),
-        Cubie.create(faces[4][3], faces[1][7], null, 4, 1), 
-        Cubie.create(faces[4][5], faces[3][7], null, 4, 3),
-        Cubie.create(faces[5][0], faces[4][6], faces[1][6], 5, 4, 1),
-        Cubie.create(faces[5][1], faces[4][7], null, 5, 4),
-        Cubie.create(faces[5][2], faces[4][8], faces[3][8], 5, 4, 3)
-    ];
-    for (var index in tempState.cubies)
-        tempState.cubies[index].faces.sort(function(a,b){return a.face - b.face;});
-    
-    return tempState;
-};
-
-/**
- * The cube's colors. 
- */
-RubixState.colors = {
-    red : "R",
-    green : "G",
-    yellow : "Y",
-    blue : "B",
-    orange : "O",
-    white : "W"
-};
-
-/**
- * The cube's faces. They match the rotation map below for cubie face rotations.
- */
-RubixState.faces = {
-    back : 0,
-    left : 1,
-    top : 2,
-    right : 3,
-    front : 4,
-    bottom : 5
-};
-
-RubixState.faceValues = ['R','G','Y','B','O','W'];
-
-/**
- * This sets up the indicies in reference to a clockwise pattern. 
- * 
- *           00 01 02
- *           03 Re 04
- *           05 06 07
- * 
- * 00 03 05  05 06 07  07 04 02
- * 08 Gr 09  09 Ye 10  10 Bl 11
- * 17 15 12  12 13 14  14 16 19
- * 
- *           12 13 14
- *           15 Or 16
- *           17 18 19
- * 
- *           17 18 19
- *           08 Wh 11
- *           00 01 02
- */
-RubixState.sideLookUpTable = [
-    [ 7, 6, 5, 3, 0, 1, 2, 4], // red, back
-    [ 5, 9,12,15,17, 8, 0, 3], // green, left
-    [ 5, 6, 7,10,14,13,12, 9], // yellow, top
-    [14,10, 7, 4, 2,11,19,16], // blue, right
-    [12,13,14,16,19,18,17,15], // orange, front
-    [17,18,19,11, 2, 1, 0, 8]  // white, bottom
-];
-
-
-/**
- * Defines a new cubie.
- * @param {Object} faces an array of 2 or 3 cubie faces (depending on if it's a side or corner)
- */
-function Cubie(faces)
-{
-    // The cubie's faces (2 for sides, 3 for corners)
-    this.faces = faces.slice(0); // Copy array
-}
-
-/**
- * Rotates the cubie 1 to 3 rotations in the clockwise direction given the face.
- * @param {number} face the face of the cube to rotate
- * @param {number} rotations the number of rotations
- */
-Cubie.prototype.rotate = function(face, rotations)
-{
-    for (var index in this.faces)
-    {
-        // Face doesn't change if it's the rotating face.
-        if (this.faces[index].face === face)
-            continue;
         
-        this.faces[index].rotate(face, rotations);
-    }
+    var state = new RubixState();
+    state.cubies = new Uint8Array(new ArrayBuffer(48));
+
+    /*
+             00 24 03
+             26 -R 28
+             06 30 09
+    02 27 08 07 31 10 11 29 05
+    33 -G 35 34 -Y 36 37 -B 39
+    14 41 17 15 42 18 20 45 23
+             16 43 19
+             40 -O 44
+             13 47 22
+             12 46 21
+             32 -W 38
+             01 25 04   
+    */
+    //c0
+    state.cubies[0]  = RubixState.createFace(faces[0][0],0);
+    state.cubies[1]  = RubixState.createFace(faces[5][6],5);
+    state.cubies[2]  = RubixState.createFace(faces[1][0],1);
     
-    this.faces.sort(function(a,b){return a.face - b.face;});
-};
-
-/**
- * Returns an identifier for this cubie based on its colors. Disregards position.
- * @return an identifier for this cubie
- */
-Cubie.prototype.colorId = function()
-{
-    var colors = [];
-    for (var index in this.faces)
-        colors.push(this.faces[index].color);
+    //c1
+    state.cubies[3]  = RubixState.createFace(faces[0][2],0);
+    state.cubies[4]  = RubixState.createFace(faces[5][8],5);
+    state.cubies[5]  = RubixState.createFace(faces[3][2],3);
     
-    colors.sort();
-    var id = "";
-
-    for (index in colors)
-        id += colors[index];
+    //c2
+    state.cubies[6]  = RubixState.createFace(faces[0][6],0);
+    state.cubies[7]  = RubixState.createFace(faces[2][0],2);
+    state.cubies[8]  = RubixState.createFace(faces[1][2],1);
     
-    return id;
-};
-
-/**
- * Returns the color on the given face of this cubie. 
- * @param {number} face the specified face
- */
-Cubie.prototype.getColor = function(face)
-{
-    for (var i in this.faces)
-    {
-        if (this.faces[i].face === face)
-            return this.faces[i].color;
-    }
-};
-
-/**
- * Returns true if the cubie is valid. Only checks colors, since a cubie doesn't
- * know if it's in the correct position. (Not sure if this will be useful...)
- * @return true if the cubie is valid, false otherwise. 
- */
-Cubie.prototype.isValid = function() 
-{
-    // Check if all sides are different colors
-    if (this.isSide())
-    {
-        if (this.faces[0].color == this.faces[1].color)
-            return false;
-    }
-    else if (this.isCorner())
-    {
-        if (this.faces[0].color == this.faces[1].color ||
-            this.faces[1].color == this.faces[2].color ||
-            this.faces[0].color == this.faces[2].color)
-            return false;
-    }
+    //c3
+    state.cubies[9]  = RubixState.createFace(faces[0][8],0);
+    state.cubies[10] = RubixState.createFace(faces[2][2],2);
+    state.cubies[11] = RubixState.createFace(faces[3][0],3);
     
-    return false;
-};
-
-/**
- * Returns true if the cubie is a side cube.
- * @return true if the cubie is a side, false otherwise. 
- */
-Cubie.prototype.isSide = function()
-{
-    return this.faces.length === 2;
-};
-
-/**
- * Returns true if the cubie is a corner cube.
- * @return true if the cubie is a corner, false otherwise. 
- */
-Cubie.prototype.isCorner = function()
-{
-    return this.faces.length === 3;
-};
-
-Cubie.prototype.equals = function(other)
-{
-    return JSON.stringify(this) === JSON.stringify(other);
-};
-
-/**
- * Returns a copy of this cubie.
- * @return a copy of this cubie
- */
-Cubie.prototype.copy = function()
-{
-    var faces = [];
-    for (var index in this.faces)
-        faces[index] = this.faces[index].copy();
-    return new Cubie(faces);
-};
-
-/**
- * Creates a new cubie given 2 or 3 colors and faces.
- * @param {number} color1 the color of the first face.
- * @param {number} color2 the color of the second face.
- * @param {number} color3 the color of the third face (optional if a side cubie).
- * @param {number} face1 the direction of the first face (optional if assuming goal state).
- * @param {number} face2 the direction of the second face (optional if assuming goal state).
- * @param {number} face3 the direction of the third face (optional if assuming goal state).
- * @return a new Cubie.
- */
-Cubie.create = function(color1, color2, color3, face1, face2, face3)
-{
-    face1 = face1 == null ? Cubie.defaultFace(color1) : face1;
-    face2 = face2 == null ? Cubie.defaultFace(color2) : face2;
+    //c4
+    state.cubies[12] = RubixState.createFace(faces[5][0],5);
+    state.cubies[13] = RubixState.createFace(faces[4][6],4);
+    state.cubies[14] = RubixState.createFace(faces[1][6],1);
     
-    // A side
-    if (color3 == null)
-    {        
-        return new Cubie([new CubieFace(color1, face1),
-                          new CubieFace(color2, face2)]);
-    }
+    //c5
+    state.cubies[15] = RubixState.createFace(faces[2][6],2);
+    state.cubies[16] = RubixState.createFace(faces[4][0],4);
+    state.cubies[17] = RubixState.createFace(faces[1][8],1);
     
-    // A corner
-    face3 = face3 == null ? Cubie.defaultFace(color3) : face3;
+    //c6
+    state.cubies[18] = RubixState.createFace(faces[2][8],2);
+    state.cubies[19] = RubixState.createFace(faces[4][2],4);
+    state.cubies[20] = RubixState.createFace(faces[3][6],3);   
     
-    return new Cubie([new CubieFace(color1, face1),
-                      new CubieFace(color2, face2),
-                      new CubieFace(color3, face3)]);
+    //c7
+    state.cubies[21] = RubixState.createFace(faces[5][2],5);
+    state.cubies[22] = RubixState.createFace(faces[4][8],4);
+    state.cubies[23] = RubixState.createFace(faces[3][8],3);
+    
+    //s0
+    state.cubies[24] = RubixState.createFace(faces[0][1],0);
+    state.cubies[25] = RubixState.createFace(faces[5][7],5);
+    
+    //s1
+    state.cubies[26] = RubixState.createFace(faces[0][3],0);
+    state.cubies[27] = RubixState.createFace(faces[1][1],1);
+    
+    //s2
+    state.cubies[28] = RubixState.createFace(faces[0][5],0);
+    state.cubies[29] = RubixState.createFace(faces[3][1],3);
+    
+    //s3
+    state.cubies[30] = RubixState.createFace(faces[0][7],0);
+    state.cubies[31] = RubixState.createFace(faces[2][1],2);
+    
+    //s4
+    state.cubies[32] = RubixState.createFace(faces[5][3],5);
+    state.cubies[33] = RubixState.createFace(faces[1][3],1);
+    
+    //s5
+    state.cubies[34] = RubixState.createFace(faces[2][3],2);
+    state.cubies[35] = RubixState.createFace(faces[1][5],1);
+    
+    //s6
+    state.cubies[36] = RubixState.createFace(faces[2][5],2);
+    state.cubies[37] = RubixState.createFace(faces[3][3],3);
+    
+    //s7
+    state.cubies[38] = RubixState.createFace(faces[5][5],5);
+    state.cubies[39] = RubixState.createFace(faces[3][5],3);
+    
+    //s8
+    state.cubies[40] = RubixState.createFace(faces[4][3],4);
+    state.cubies[41] = RubixState.createFace(faces[1][7],1);
+    
+    //s9
+    state.cubies[42] = RubixState.createFace(faces[2][7],2);
+    state.cubies[43] = RubixState.createFace(faces[4][1],4);
+        
+    //s10
+    state.cubies[44] = RubixState.createFace(faces[4][5],4);
+    state.cubies[45] = RubixState.createFace(faces[3][7],3);
+    
+    //s11
+    state.cubies[46] = RubixState.createFace(faces[5][1],5);
+    state.cubies[47] = RubixState.createFace(faces[4][7],4);
+
+    return state;
 };
 
+//*=face +=color -=unused
+//-***-+++ 
+
 /**
- * Returns the default face of the given color ( assumes the cube is in the goal state). 
- * @param {number} color the specified color
- * @return the default face
+ * Creates a UInt8 face state with the following binary encoding: -***-+++ 
+ * where:
+ *  - : null 
+ *  + : color
+ *  * : face
+ * 
+ * Please note there are 2 bits per space wasted.
+ * 
+ * @param color The uppercase color character that will be encoded to a 3 bit pattern.
+ * @param face The face side to be encoded into the state.
+ * 
+ * @return The encoded face state as a Uint8.
  */
-Cubie.defaultFace = function(color)
+RubixState.createFace = function(color, face)
 {
+    var tempElement = 0;
+    var toAdd = 0;
+    
     switch (color)
     {
-        case RubixState.colors.yellow:
-            return RubixState.faces.top;
-        case RubixState.colors.red:
-            return RubixState.faces.back;
-        case RubixState.colors.white:
-            return RubixState.faces.bottom;
-        case RubixState.colors.orange:
-            return RubixState.faces.front;
-        case RubixState.colors.green:
-            return RubixState.faces.left;
-        case RubixState.colors.blue:
-            return RubixState.faces.right;
+        case 'R':
+            toAdd = 0;
+            break;
+        case 'G':
+            toAdd = 1;
+            break;
+        case 'Y':
+            toAdd = 2;
+            break;
+        case 'B':
+            toAdd = 3;
+            break;
+        case 'O':
+            toAdd = 4;
+            break;
+        case 'W':
+            toAdd = 5;
+            break;
         default:
-            return undefined;
+            break;        
     }
+    
+    return tempElement | (toAdd | (face << 4));   
 };
 
 /**
- * Defines a cubie face. 
- * @param {number} color the cubie face's color.
- * @param {number} face the cubie face's direction.
- * @return a new cubie face.
+ * Creates a copy of the supplied RubixState object.
+ * 
+ * @param state The state that is to be copied.
+ * @return The copied state.
  */
-function CubieFace(color, face)
+RubixState.copy = function(state)
 {
-    this.color = color;
-    this.face =  face;
-}
-
-/**
- * Rotates the cubie face 1 to 3 rotations in the clockwise direction given the face.
- * Rotating the cubie face only means redefining its face direction depending on the rotation.
- * @param {number} face the face of the cube to rotate (not the cubie face's face)
- * @param {number} rotations the number of rotations
- */
-CubieFace.prototype.rotate = function(face, rotations)
-{
-    // Added a tenary operator to handle an undefined issue.
-    this.face = CubieFace.newFaceMap[face][this.face]? 
-        CubieFace.newFaceMap[face][this.face][rotations]:this.face;
+    var newState = new RubixState(), copy = state.cubies.buffer.slice(0);
+    newState.cubies = new Uint8Array(copy);   
+    
+    return newState;
 };
 
 /**
- * Returns a copy of this cubie face.
- * @return a copy of this cubie face
+ * The equivalence function for two RubixState objects.
+ * @param state1 A state to be checked for equivalence.
+ * @param state2 A state to be checked for equivalence.
+ * @return true: All faces are equivalent, false: Any state is non equivalent.
  */
-CubieFace.prototype.copy = function()
+RubixState.isEqual = function(state1, state2)
 {
-    return new CubieFace(this.color, this.face);
+    var equal = true;  
+    
+    /**
+     * Iterate over the cubie buffer to find any abberations, leave if a bad state is found.
+     */
+    for(var index = 0, length = state1.cubies.length; (index < length) & equal; index ++)
+    {
+        equal = (state1.cubies[index] === state2.cubies[index]);        
+    }
+
+    return equal;
+};
+
+RubixState.hash = function(state)
+{
+    var hash = 0, hashA = 0, hashB = 0, faceState, faceVal, colorVal;
+    
+    // Must split this into 2 parts because bitwise operators are on int32
+    for (var index = 0; index < 10; index++)
+    {
+        // -***-+++ => ...***+++
+        faceState = state.cubies[index];
+        faceVal = Number(faceState >> 4);
+        colorVal = faceState & 7;
+        
+        // ...***+++ => ...***+++***+++
+        console.log(state.cubies[index] + ":" + ((faceVal << 3) | colorVal));
+        hashA = (hashA << 6) | ((faceVal << 3) | colorVal);
+    }
+    
+    for (; index < 20; index++)
+    {
+        // -***-+++ => ...***+++
+        faceState = state.cubies[index];
+        faceVal = Number(faceState >> 4);
+        colorVal = faceState & 7;
+        
+        // ...***+++ => ...***+++***+++
+        console.log(state.cubies[index] + ":" + ((faceVal << 3) | colorVal));
+        hashB = (hashB << 6) | ((faceVal << 3) | colorVal);
+    }
+    
+    
+    
+    return hash;
+};
+
+RubixState.cubieHash = function(state, index)
+{
+    // -***-+++ => ...***+++
+    var faceState = state.cubie[index];
+    var faceVal = Number(faceState >> 4);
+    var colorVal = faceState & 7;
+    
+    return (faceVal << 3) | colorVal;
+};
+
+/**
+ * Retrieve the colorID of a face state.
+ * @param faceState The face state to retrieve the color from.
+ * @return The color ID.
+ */
+RubixState.colorID = function(faceState)
+{
+    return RubixState.faceValues[faceState & 7];
+};
+
+RubixState.findCubie = function(state, cubie)
+{
+    var colorId = RubixState.cubieColorId(state, cubie);
+    
+    for (var index = 0; index < RubixState.cubieMap.length; index++)
+    {
+        if (RubixState.cubieColorId(state, index) === colorId)
+            return index;
+    }
+    
+    // Should not get here.
+    throw "Cubie not found: Invalid cubie";
+};
+
+/**
+ * Returns a unique ID to represent the colors of the faces of the specified cubie.
+ * Disregards orientation.
+ * @param state the state containing the cubie
+ * @param cubie the index of the cubie according to the cubieMap
+ * @return a unique color ID.
+ */
+RubixState.cubieColorId = function(state, cubie)
+{
+    var colorId = 0, faceIds = [], faceId = 0, cubieIndicies = RubixState.cubieMap[cubie], index;
+    
+    for (index = 0; index < cubieIndicies.length; index++)
+    {
+        faceIds[index] = state.cubies[cubieIndicies[index]];
+    }
+    
+    faceIds.sort();
+    
+    for (index = 0; index < faceIds.length; index++)
+    {
+        faceId = state.cubies[cubieIndicies[index]] & 7;
+        colorId << 3;
+        colorId = colorId | faceId;
+    }
+    
+    return colorId;
+};
+
+/**
+ * The to String functionality for a RubixState.
+ * @param state The state to retrieve a String from.
+ * @return A String for the RubixState object.
+ */
+RubixState.toString = function(state)
+{
+    var output = '   ' + RubixState.colorID(state.cubies[0]) + RubixState.colorID(state.cubies[24]) + RubixState.colorID(state.cubies[3]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[26]) + 'R' + RubixState.colorID(state.cubies[28]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[6]) + RubixState.colorID(state.cubies[30]) + RubixState.colorID(state.cubies[9]) + '\n' +
+        
+        RubixState.colorID(state.cubies[2]) + RubixState.colorID(state.cubies[27]) + RubixState.colorID(state.cubies[8]) +
+        RubixState.colorID(state.cubies[7]) + RubixState.colorID(state.cubies[31]) + RubixState.colorID(state.cubies[10]) +
+        RubixState.colorID(state.cubies[11]) + RubixState.colorID(state.cubies[29]) + RubixState.colorID(state.cubies[5]) + '\n' + 
+        
+        RubixState.colorID(state.cubies[33]) + 'G' + RubixState.colorID(state.cubies[35]) +
+        RubixState.colorID(state.cubies[34]) + 'Y' + RubixState.colorID(state.cubies[36]) +
+        RubixState.colorID(state.cubies[37]) + 'B' + RubixState.colorID(state.cubies[39]) + '\n' + 
+        
+        RubixState.colorID(state.cubies[14]) + RubixState.colorID(state.cubies[41]) + RubixState.colorID(state.cubies[17]) +
+        RubixState.colorID(state.cubies[15]) + RubixState.colorID(state.cubies[42]) + RubixState.colorID(state.cubies[18]) +
+        RubixState.colorID(state.cubies[20]) + RubixState.colorID(state.cubies[45]) + RubixState.colorID(state.cubies[23]) + '\n' + 
+        
+        '   ' + RubixState.colorID(state.cubies[16]) + RubixState.colorID(state.cubies[43]) + RubixState.colorID(state.cubies[19]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[40]) + 'O' + RubixState.colorID(state.cubies[44]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[13]) + RubixState.colorID(state.cubies[47]) + RubixState.colorID(state.cubies[22]) + '\n' +
+        
+        '   ' + RubixState.colorID(state.cubies[12]) + RubixState.colorID(state.cubies[46]) + RubixState.colorID(state.cubies[21]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[32]) + 'W' + RubixState.colorID(state.cubies[38]) + '\n' + 
+        '   ' + RubixState.colorID(state.cubies[1]) + RubixState.colorID(state.cubies[25]) + RubixState.colorID(state.cubies[4]) + '\n';
+        
+    return output;
+        
+    
+};
+
+RubixState.cubieMap = {
+    0 : [0, 1, 2], // c00
+    1 : [],
+    2 : [3, 4, 5], // c01
+    3 : [],
+    4 : [],
+    5 : [6, 7, 8], // c02
+    6 : [],
+    7 : [9, 10, 11], // c03
+    8 : [],
+    9 : [],
+    10 : [],
+    11 : [],
+    12 : [15, 16, 17], // c05
+    13 : [],
+    14 : [18, 19, 20], // c06
+    15 : [],
+    16 : [],
+    17 : [12, 13, 14], // c04
+    18 : [],
+    19 : [21, 22, 23], // c07
+    20 : []
 };
 
 /**
@@ -485,10 +590,8 @@ CubieFace.prototype.copy = function()
  * defines the new face for a cubie face. 
  * 
  * Usage: CubieFace.newFaceMap[rotating face][current cubie face's face][number of rotations]
- * 
- * There's probably a better way to do this...
  */
-CubieFace.newFaceMap = {
+RubixState.newFaceMap = {
     0 : {
         1 : {
             1 : 5,
