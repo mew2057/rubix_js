@@ -12,7 +12,7 @@ function RubixNode(state,parent,action)
     this.parentNode = parent;
     
     // This is a two tuple object containing a face and the number of rotations.
-    this.nodeAction = action;
+    this.nodeAction = action ? ((0 | action[0]) << 4) | action[1] : null;
     
     if(parent)
     {        
@@ -41,7 +41,7 @@ RubixNode.prototype.getSuccessors = function()
     // Record them.
     for(var i = 0; i < 6; i++)
     {
-        if(this.nodeAction && i == this.nodeAction[0])
+        if(this.nodeAction && i === this.nodeAction >> 4)
         {
             continue;
         }
@@ -52,7 +52,6 @@ RubixNode.prototype.getSuccessors = function()
             tempNode = new RubixNode(RubixState.copy(this.rubixState), this, [i,j]);
             
             RubixState.rotate(tempNode.rubixState,i,j);
-//            console.log(RubixState.toString(tempNode.rubixState), RubixState.toString(this.rubixState),i,j);
 
             successors.push(tempNode);
         }   

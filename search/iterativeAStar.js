@@ -11,7 +11,7 @@ function AStar()
 
 AStar.prototype.iterativeAStar = function(initialState)
 {
-    var sequence =[];
+    var sequence ="";
     var depth = 0;
     var goalNode = null;
     console.log(RubixState.toString(initialState));
@@ -30,6 +30,7 @@ AStar.prototype.iterativeAStar = function(initialState)
         if(goalNode)
         {           
             console.log(this.pathFromNode(goalNode));
+            sequence =this.pathFromNode(goalNode);
             break;
         }
         else{
@@ -90,11 +91,11 @@ AStar.prototype.pathFromNode = function(node)
 {
     if(node.depth > 1)
     {
-        return this.pathFromNode(node.parentNode) + ", " + RubixState.faceValues[node.nodeAction[0]] + ":" + node.nodeAction[1];
+        return this.pathFromNode(node.parentNode) + ", " + RubixState.faceValues[node.nodeAction >> 4] + ":" + (node.nodeAction & 7);
     }
     else if (node.depth === 1) 
     {
-        return RubixState.faceValues[node.nodeAction[0]] + ":" + node.nodeAction[1];
+        return RubixState.faceValues[node.nodeAction >> 4] + ":" + (node.nodeAction & 7);
     }
     else
     {

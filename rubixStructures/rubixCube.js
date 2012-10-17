@@ -25,7 +25,7 @@ RubixState.scratchBuffer = new Uint8Array(new ArrayBuffer(20));
 /**
  * A scratch array used in face rotations.
  */
-RubixState.faceSet =[];
+RubixState.faceSet = [];
 
 /**
  * The cube's faces. They match the rotation map below for cubie face rotations.
@@ -429,50 +429,6 @@ RubixState.isEqual = function(state1, state2)
     return equal;
 };
 
-RubixState.hash = function(state)
-{
-    var hash = 0, hashA = 0, hashB = 0, faceState, faceVal, colorVal;
-    
-    // Must split this into 2 parts because bitwise operators are on int32
-    for (var index = 0; index < 10; index++)
-    {
-        // -***-+++ => ...***+++
-        faceState = state.cubies[index];
-        faceVal = Number(faceState >> 4);
-        colorVal = faceState & 7;
-        
-        // ...***+++ => ...***+++***+++
-        console.log(state.cubies[index] + ":" + ((faceVal << 3) | colorVal));
-        hashA = (hashA << 6) | ((faceVal << 3) | colorVal);
-    }
-    
-    for (; index < 20; index++)
-    {
-        // -***-+++ => ...***+++
-        faceState = state.cubies[index];
-        faceVal = Number(faceState >> 4);
-        colorVal = faceState & 7;
-        
-        // ...***+++ => ...***+++***+++
-        console.log(state.cubies[index] + ":" + ((faceVal << 3) | colorVal));
-        hashB = (hashB << 6) | ((faceVal << 3) | colorVal);
-    }
-    
-    
-    
-    return hash;
-};
-
-RubixState.cubieHash = function(state, index)
-{
-    // -***-+++ => ...***+++
-    var faceState = state.cubie[index];
-    var faceVal = Number(faceState >> 4);
-    var colorVal = faceState & 7;
-    
-    return (faceVal << 3) | colorVal;
-};
-
 /**
  * Retrieve the colorID of a face state.
  * @param faceState The face state to retrieve the color from.
@@ -483,18 +439,36 @@ RubixState.colorID = function(faceState)
     return RubixState.faceValues[faceState & 7];
 };
 
-RubixState.findCubie = function(state, cubie)
+/**
+ * Finds the cubie located at the specified cubie of state1 in state2.
+ */
+RubixState.findCubie = function(state1, cubie, state2)
 {
-    var colorId = RubixState.cubieColorId(state, cubie);
+    var colorId = RubixState.cubieColorId(state1, cubie);
     
-    for (var index = 0; index < RubixState.cubieMap.length; index++)
+    for (var index = 0; index < 20; index++)
     {
-        if (RubixState.cubieColorId(state, index) === colorId)
+        if (RubixState.cubieColorId(state2, index) === colorId)
             return index;
     }
     
     // Should not get here.
     throw "Cubie not found: Invalid cubie";
+};
+
+RubixState.areCubiesEqual = function(state1, state2, cubie)
+{
+    var cubieIndex, cubieIndicies = RubixState.cubieMap[cubie];
+    
+    for (var index = 0; index < cubieIndicies.length; index++)
+    {
+        cubieIndex = cubieIndicies[index];
+        
+        if (state1.cubies[cubieIndex] !== state2.cubies[cubieIndex])
+            return false;
+    }
+    
+    return true;
 };
 
 /**
@@ -506,21 +480,23 @@ RubixState.findCubie = function(state, cubie)
  */
 RubixState.cubieColorId = function(state, cubie)
 {
-    var colorId = 0, faceIds = [], faceId = 0, cubieIndicies = RubixState.cubieMap[cubie], index;
+    var colorId = 0, faceIds = [], cubieIndicies = RubixState.cubieMap[cubie], index;
     
     for (index = 0; index < cubieIndicies.length; index++)
     {
-        faceIds[index] = state.cubies[cubieIndicies[index]];
+        faceIds[index] = state.cubies[cubieIndicies[index]] & 7;
     }
     
     faceIds.sort();
     
     for (index = 0; index < faceIds.length; index++)
     {
-        faceId = state.cubies[cubieIndicies[index]] & 7;
-        colorId << 3;
-        colorId = colorId | faceId;
+        colorId = (colorId << 3) | faceIds[index];
     }
+    
+    // A corner ID could produce the same as an edge, so vary them by 13 bits
+    if (faceIds.length === 2)
+        colorId = colorId << 13;
     
     return colorId;
 };
@@ -563,26 +539,25 @@ RubixState.toString = function(state)
 
 RubixState.cubieMap = {
     0 : [0, 1, 2], // c00
-    1 : [],
+    1 : [24, 25],
     2 : [3, 4, 5], // c01
-    3 : [],
-    4 : [],
+    3 : [26, 27],
+    4 : [28, 29],
     5 : [6, 7, 8], // c02
-    6 : [],
+    6 : [30, 31],
     7 : [9, 10, 11], // c03
-    8 : [],
-    9 : [],
-    10 : [],
-    11 : [],
+    8 : [32, 33],
+    9 : [34, 35],
+    10 : [36, 37],
+    11 : [38, 39],
     12 : [15, 16, 17], // c05
-    13 : [],
+    13 : [42, 43],
     14 : [18, 19, 20], // c06
-    15 : [],
-    16 : [],
+    15 : [40, 41],
+    16 : [44, 45],
     17 : [12, 13, 14], // c04
-    18 : [],
-    19 : [21, 22, 23], // c07
-    20 : []
+    18 : [46, 47],
+    19 : [21, 22, 23] // c07
 };
 
 /**
