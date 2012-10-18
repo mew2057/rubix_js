@@ -46,6 +46,8 @@ RubixState.prototype.rotate = function(face, rotations)
     }
 };
 
+
+
 /**
  * Finds and returns the index of the given cubie on this cube state.
  * @return the index of the given cubie.

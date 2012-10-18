@@ -28,6 +28,11 @@ RubixState.scratchBuffer = new Uint8Array(new ArrayBuffer(20));
 RubixState.faceSet = [];
 
 /**
+ * An array used in calculating pairity for edges in on a rubix cube.
+ */
+RubixState.edgeWindows = [[24,30],[27,41],[34,36],[29,45],[43,47],[32,38]];
+
+/**
  * The cube's faces. They match the rotation map below for cubie face rotations.
  */
 RubixState.faces = {
@@ -43,6 +48,8 @@ RubixState.faces = {
  * The face value map used in tanslating moves to something human readable. 
  */
 RubixState.faceValues = ['R','G','Y','B','O','W'];
+
+/*RubixState.goalState = RubixState.createWithGoalState();*/
 
 /**
  * Defines cubie locations for a side.
@@ -203,6 +210,27 @@ RubixState.createWithGoalState = function()
  */
 RubixState.createWithString = function(text)
 {
+    
+    if(text.length !=  54) 
+    {
+        console.log("Your rubik's cube doesn't contain the right number of cubie" +
+            " faces!");
+        return null;
+    }
+    
+    var error = (text.match(/R/g)||[]).length !== 9 ? "Incorrect number of Rs\n" : "";
+    error += (text.match(/G/g)||[]).length !== 9 ? "Incorrect number of Gs\n" : "";
+    error += (text.match(/Y/g)||[]).length !== 9 ? "Incorrect number of Ys\n" : "";
+    error += (text.match(/B/g)||[]).length !== 9 ? "Incorrect number of Bs\n" : "";
+    error += (text.match(/O/g)||[]).length !== 9 ? "Incorrect number of Os\n" : "";
+    error += (text.match(/W/g)||[]).length !== 9 ? "Incorrect number of Ws\n" : "";
+    
+    if(error !== "")
+    {
+        console.log(error);
+        return null;
+    }
+    
     // An array to hold the intermediate state.
     var faces = [];
     
@@ -235,6 +263,17 @@ RubixState.createWithString = function(text)
     for(var face in faces)
     {
         faces[face] = faces[face].split('');
+    }
+    
+    // Check the center cubies before advancing.
+    for(index = 0; index < faces.length; index ++)
+    {
+        if(RubixState.faceValues[index] !== faces[index][4])
+        {
+            console.log("Your " + RubixState.faceValues[index] + " face center cubie" +
+                 " is wrong!");
+            return null;
+        }
     }
         
     var state = new RubixState();
@@ -341,12 +380,291 @@ RubixState.createWithString = function(text)
     //s11
     state.cubies[46] = RubixState.createFace(faces[5][1],5);
     state.cubies[47] = RubixState.createFace(faces[4][7],4);
-
-    return state;
+    
+    return RubixState.verifyState(state) ? state : null;
 };
 
-//*=face +=color -=unused
-//-***-+++ 
+/**
+ * Verifies the supplied state. Should only be called on creation!
+ * @param state the state to verify.
+ * @return true if valid false if not.
+ */
+RubixState.verifyState = function(state)
+{   
+    var faces = [0,0,0,0,0,0];
+    var faceWindow = 0;
+    
+    // A magical face checker that actually does what's described below.
+    var updateFaceCheck = function(currentCubies, faceColors, bufferIndex)
+    {
+        var faceIndex = 0;
+        if(!bufferIndex)
+        {
+            for(var index in currentCubies)
+            {
+                faceIndex = faceColors.indexOf(currentCubies[index] & 7);
+                faces[currentCubies[index] >> 4] += faceIndex;
+            }
+        }
+        else
+    	{
+			for(var index = 0; index <currentCubies.length; index ++)
+            {
+                faceIndex = faceColors.indexOf(currentCubies[index] & 7);			
+				
+				if(RubixState.edgeWindows[currentCubies[index] >> 4].indexOf(bufferIndex +index) !=-1)
+                {
+					faceWindow += faceIndex;
+                }
+            }
+		}
+    };
+    
+    /**
+     * Does corner cubie parity checks. 
+     * 
+     * Each corner face is assigned a number derived from the assumed original 
+     * position of the cubie color configuration in the original cube. All faces 
+     * for Red and Orange are assigned 0 for the purpose of this calculation.
+     * After assigning these zeroes each cubie face is assigned a number while moving
+     * clockwise from the numbered faces. For example the RBY cubie is assigned as R-0 B-1 Y-2.
+     * This is repeated for all colors and the result is as follows.
+     * 
+     *     0-0
+     *     ---
+     *     0-0
+     * 1-2 1-2 1-2
+     * --- --- ---
+     * 2-1 2-1 2-1
+     *     0-0
+     *     ---
+     *     0-0
+     *     1-2
+     *     ---
+     *     2-1
+     * 
+     * Opposing sides regardless of legal moves will always add up to some multiple of 3
+     * allowing us to check corner parity. Logically this indicates that only 1/3 of
+     * possible cubie configurations are possible with legal moves.
+     */ 
+    for (var index = 0; index < 24; index +=3)
+    {
+        switch((state.cubies[index] & 7) + 
+            (state.cubies[index + 1] & 7) + 
+            (state.cubies[index + 2] & 7)){    
+            //RYG
+            case 3:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1], state.cubies[index + 2]],
+                    [0,2,1]);
+                break;
+            //RBY
+            case 5:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1],state.cubies[index + 2]],
+                    [0,3,2]);
+                break;
+            //RGW
+            case 6:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1], state.cubies[index + 2]],
+                    [0,1,5]);
+                break;
+            //OGY
+            case 7:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1], state.cubies[index + 2]],
+                    [4,1,2]);
+                break;
+            //RWB
+            case 8:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1], state.cubies[index + 2]],
+                    [0,5,3]);
+                break;
+            //OYB
+            case 9:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1] , state.cubies[index + 2]],
+                    [4,2,3]);
+                break;
+            //OWG
+            case 10:
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1],state.cubies[index + 2]],
+                    [4,5,1]);
+                break;
+            //OBW
+            case 12:  
+                updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1], state.cubies[index + 2]],
+                    [4,3,5]);
+                break;
+            default:
+                console.log("An invalid cubie has been discovered! Bad corner cubie " +
+                    "combination! For corner:"+  index / 3 );
+                return false;
+        }
+        
+        if((state.cubies[index] & 7) === (state.cubies[index + 1] & 7) ||
+            (state.cubies[index] & 7) === (state.cubies[index + 2] & 7) ||
+    		(state.cubies[index + 1] & 7) === (state.cubies[index + 2] & 7))
+        {
+			console.log("Corner Cubie:" + index/3 + " had duplicate colors.");
+            return false;   
+        }
+    }       
+    
+    if(((faces[0]+faces[4]) % 3) + ((faces[1] + faces[3]) % 3) + ((faces[2] + faces[5]) % 3) !== 0)
+    {
+        console.log("A corner has a bad orientation, sorry this state is unsolvable for the assumed goal state.");
+        return false;
+    }
+    
+
+	/**
+     * Performs the edge parity check.
+     * 
+     * Arbitrarily assigns fixed windows to a solved cube alternating horizontal and vertical as follows:
+     * 
+     *     -1-
+     *     0-0
+     *     -1-
+     * -1- -0- -1-
+     * 0-0 1-1 0-0
+     * -1- -0- -1-
+     *     -1-
+     *     0-0
+     *     -1-
+     *     -0-
+     *     1-1
+     *     -0-	
+     * After assigning these windows, the algorithm then determines what the original value of the 
+     * side face was and adds it to the window sum (if the face is in a position
+     * that was originally assigned a 1). If the sum mod 2 is zero the cube is valid
+     * for our goal state, this means that the total number of reachable corner
+     * states is effectively halved.
+	*/
+    for (index = 24; index < 48; index +=2)
+    {
+		switch((state.cubies[index] & 7) + 
+            (state.cubies[index + 1] & 7))
+		{
+			//RG
+			case 1:
+				updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1]],
+                    [0,1],index);
+				break;
+			//RY
+			case 2:
+				updateFaceCheck([state.cubies[index], 
+                    state.cubies[index + 1]],
+                    [2,0],index);
+				break;
+			//RB, YG
+			case 3:
+				if( (state.cubies[index] & 7) === 0 || 
+                    (state.cubies[index] & 7) === 3)
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[0,3],index);
+				}
+				else
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[1,2],index);
+				}
+				break;
+			//RW, OG, YB
+			case 5:
+				//RW
+				if((state.cubies[index] & 7) === 0 || 
+                    (state.cubies[index] & 7) === 5)
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[5,0],index);
+				}
+				//OG
+				else if ((state.cubies[index] & 7) === 4 || 
+                    (state.cubies[index] & 7) === 1)
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[4,1],index);
+				}
+				//YB
+				else
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[3,2],index);
+				}
+				break;
+			//OY, WG
+			case 6:
+				if((state.cubies[index] & 7) === 2 || 
+                    (state.cubies[index] & 7) === 4)
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[2,4],index);
+				}
+				else
+				{
+					updateFaceCheck([state.cubies[index], 
+						state.cubies[index + 1]],
+						[1,5],index);
+				}
+				break;
+			//OB
+			case 7:
+				updateFaceCheck([state.cubies[index], 
+					state.cubies[index + 1]],
+					[4,3],index);
+				break;
+			//WB
+			case 8:
+				updateFaceCheck([state.cubies[index], 
+					state.cubies[index + 1]],
+					[3,5],index);
+				break;
+			//OW
+			case 9:
+				updateFaceCheck([state.cubies[index], 
+					state.cubies[index + 1]],
+					[5,4],index);
+				break;
+			default:
+				console.log("An invalid cubie has been discovered! Bad side cubie " +
+                    "combination! For side:"+  (index - 24) / 2);
+                return false;
+			
+		}	
+       
+        
+        if((state.cubies[index] & 7) === (state.cubies[index + 1] & 7))
+        {
+			console.log("Side Cubie:" + (index-24) / 2+ " had duplicate colors."); 
+            return false;   
+        }
+    }
+    if(faceWindow % 2 === 1)
+    {
+        console.log("One of your side cubies have been flipped, please look into this.");
+        return false;
+    }
+
+    return true;   
+};
+
+RubixState.findCornerPermutations = function(f1, f2, f3, cubeFace1, cubeFace2, cubFace3)
+{
+    
+};
 
 /**
  * Creates a UInt8 face state with the following binary encoding: -***-+++ 
@@ -501,6 +819,25 @@ RubixState.cubieColorId = function(state, cubie)
     return colorId;
 };
 
+RubixState.hash = function(state, cubies)
+{
+    var hash = 0, faceIndicies, face, index, jndex;
+    
+    for (index = 0; index < cubies.length; index++)
+    {
+        faceIndicies = RubixState.cubieMap[cubies[index]];
+        
+        for (jndex = 0; jndex < faceIndicies.length; jndex++)
+        {
+            face = state.cubies[jndex];
+            
+            hash = (hash << 3) | (face & 7);
+        }
+    }
+    
+    return hash;
+};
+
 /**
  * The to String functionality for a RubixState.
  * @param state The state to retrieve a String from.
@@ -536,6 +873,10 @@ RubixState.toString = function(state)
         
     
 };
+
+RubixState.corners = [0, 2, 5, 7, 12, 14, 17, 19];
+RubixState.edgesTop = [9, 10, 13, 15, 16, 18];
+RubixState.edgesBottom = [1, 3, 4, 6, 8, 11];
 
 RubixState.cubieMap = {
     0 : [0, 1, 2], // c00

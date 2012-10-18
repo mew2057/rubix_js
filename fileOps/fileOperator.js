@@ -58,7 +58,7 @@ FileOperator.prototype.drop = function(e)
 FileOperator.prototype.processFileText = function(input)
 {
     this.text = input.replace(/\s/g,'').toUpperCase();
-       
+    
     var state = RubixState.createWithString(this.text);
     
     (new AStar()).iterativeAStar(state);

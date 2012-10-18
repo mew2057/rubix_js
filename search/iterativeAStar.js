@@ -11,6 +11,8 @@ function AStar()
 
 AStar.prototype.iterativeAStar = function(initialState)
 {
+    if(!initialState)
+        return "Bad Cube";
     var sequence ="";
     var depth = 0;
     var goalNode = null;
