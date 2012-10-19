@@ -1,16 +1,23 @@
 /* -------------
     RubixNode.js
+    Requires - rubixState.js
+    A node representation of state for search trees.
    --------------*/
 
 
-
-//TODO add heuristic calculation to this.
+/**
+ * Defines an object to represent a node on the IDA* search tree for a rubik's cube.
+ * @param state The state to be wrapped by the node.
+ * @param parent Optional - The parent used in retrieving the path.
+ * @param action Optional - The action that was taken to reach this node.
+ *          Has the following bit pattern: -###-@@@ where -:null #:face @:rotations
+ * 
+ */
 function RubixNode(state,parent,action)
 {
     this.rubixState = state;
     this.parentNode = parent;
     
-    // This is a two tuple object containing a face and the number of rotations.
     this.nodeAction = action ? ((0 | action[0]) << 4) | action[1] : null;
     
     if(parent)
@@ -28,6 +35,7 @@ function RubixNode(state,parent,action)
 /**
  * Retrieves and generates nodes for all possible states that may follow the 
  * invoking node's state.
+ * 
  * @param node The node to retrieve successors for.
  * @return The array of successors for the rubix cube, if a solution is found 
  *         within the array return the solution alone in an array.
@@ -59,4 +67,15 @@ RubixNode.getSuccessors = function(node)
     }    
 
     return successors;
+};
+
+/**
+ * Returns a String with the node action pair for the supplied node.
+ * 
+ * @param node the node that the action is to be retrieved from.
+ * @return A String "face:rotations".
+ */
+RubixNode.nodeActionToString = function(node)
+{
+  return RubixState.faceValues[node.nodeAction >> 4] + ":" + (node.nodeAction & 7);  
 };

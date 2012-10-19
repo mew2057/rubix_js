@@ -19,61 +19,86 @@ function FileOperator()
 
 FileOperator.operator = null;
 
+/**
+ * Initializes the File Operator so it may be used on a web page.
+ */
 FileOperator.init = function()
 {
     FileOperator.operator = new FileOperator();
 
     window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
        
-    this.corners = new Uint32Array(new ArrayBuffer(32));
-    this.sides = new Uint16Array(new ArrayBuffer(24));
-       
     window.addEventListener("drop",FileOperator.operator.drop);
     window.addEventListener("dragEnter",FileOperator.operator.nullEffects);    
 };
 
+/**
+ * Prevents page propagation on drag and drop events.
+ * @param e The event that brought us to this callback.
+ */
 FileOperator.prototype.nullEffects = function(e)
 {
     e.stopPropagation();
     e.preventDefault();
 };
 
+
+/**
+ * Performs the file load and defines the behavior to take when loading is completed.
+ * @param e The event.
+ */
 FileOperator.prototype.drop = function(e)
 {
     e.stopPropagation();
     e.preventDefault();
     
-    console.log(e.dataTransfer.files[0]);
+    // Generate a FileReader to handle an asynchronous file load.
     var reader = new FileReader();
     
+    // Define the callback for when the file finishes loading.
     reader.onload = function(e)
     {
         console.log(e.target.result);
         FileOperator.operator.processFileText(e.target.result.toString());
     };
     
+    // Read the file that was dragged onto the browser pane as a text file.
     reader.readAsText(e.dataTransfer.files[0]);
 };
 
+/**
+ * Cleans up the text pulled from the rubik's cube text file and runs the IDA* search.
+ * @param input A String version of the file.
+ */
 FileOperator.prototype.processFileText = function(input)
 {
     this.text = input.replace(/\s/g,'').toUpperCase();
     
     var state = RubixState.createWithString(this.text);
     
-    (new AStar()).iterativeAStar(state);
+    $("#outputDiv").text((new AStar()).iterativeAStar(state));
 };
 
+/**
+ * The generic callback for file system issues.
+ * @param e The object containing error details.
+ */
 function generalErrorHandler(e)
 {
     console.log("Error" + e);
 }
 
-FileOperator.presentForDownload = function(data, functionCallback)
+/**
+ * Presents an object for download in the form of a download link on the webpage.
+ * @param data An object to write to a file.
+ * @param fn Optional - defines a function that represents the data as a string. 
+ *           If not supplied toString is invoked.
+ */
+FileOperator.presentForDownload = function(data, fn)
 {
-    if(functionCallback)
+    if(fn)
     {
-        FileOperator.operator.toWrite = data.functionCallback();
+        FileOperator.operator.toWrite = data.fn();
     }
     else
     {
@@ -85,6 +110,11 @@ FileOperator.presentForDownload = function(data, functionCallback)
     window.requestFileSystem(window.TEMPORARY, 60*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
 };
 
+/**
+ * Does the nitty gritty file writing (so messy >.<)
+ * 
+ * @param fs The file system that the file shall live on.
+ */
 FileOperator.prototype.writeAndPresent = function(fs)
 {
     fs.root.getFile('rubixOutput.txt',{create: true}, function(file){

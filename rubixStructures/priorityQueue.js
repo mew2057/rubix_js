@@ -1,138 +1,105 @@
-/*
-    Code cloned  from https://github.com/STRd6/PriorityQueue.js  10/14/12
-    (I thought it was excessive to write this from scratch since the AStar code 
-    is more important for my portion).
-*/
-(function() {
-  /**
-   * @private
-   */
-  var prioritySortLow = function(a, b) {
-    return b.priority - a.priority;
-  };
+function PriorityMinQueue(){
+    this.heap = [];  
+}
 
-  /**
-   * @private
-   */
-  var prioritySortHigh = function(a, b) {
-    return a.priority - b.priority;
-  };
-
-  /*global PriorityQueue */
-  /**
-   * @constructor
-   * @class PriorityQueue manages a queue of elements with priorities. Default
-   * is highest priority first.
-   *
-   * @param [options] If low is set to true returns lowest first.
-   */
-  PriorityQueue = function(options) {
-    var contents = [];
-
-    var sorted = false;
-    var sortStyle;
-
-    if(options && options.low) {
-      sortStyle = prioritySortLow;
-    } else {
-      sortStyle = prioritySortHigh;
+PriorityMinQueue.prototype.insert  = function (priority, element)
+{
+    if(!this.insertToExisting(priority,element))
+    {
+        this.heap.push({"p":priority,"values":[element]});
+        this.trickleUp(this.heap.length - 1);
     }
+};
 
-    /**
-     * @private
-     */
-    var sort = function() {
-      contents.sort(sortStyle);
-      sorted = true;
-    };
-
-    var self = {
-      /**
-       * Removes and returns the next element in the queue.
-       * @member PriorityQueue
-       * @return The next element in the queue. If the queue is empty returns
-       * undefined.
-       *
-       * @see PrioirtyQueue#top
-       */
-      pop: function() {
-        if(!sorted) {
-          sort();
-        }
-
-        var element = contents.pop();
-
-        if(element) {
-          return element.object;
-        } else {
-          return undefined;
-        }
-      },
-
-      /**
-       * Returns but does not remove the next element in the queue.
-       * @member PriorityQueue
-       * @return The next element in the queue. If the queue is empty returns
-       * undefined.
-       *
-       * @see PriorityQueue#pop
-       */
-      top: function() {
-        if(!sorted) {
-          sort();
-        }
-
-        var element = contents[contents.length - 1];
-
-        if(element) {
-          return element;
-        } else {
-          return undefined;
-        }
-      },
-
-      /**
-       * @member PriorityQueue
-       * @param object The object to check the queue for.
-       * @returns true if the object is in the queue, false otherwise.
-       */
-      includes: function(object) {
-        for(var i = contents.length - 1; i >= 0; i--) {
-          if(contents[i].object === object) {
+PriorityMinQueue.prototype.insertToExisting = function(priority,element)
+{
+    for(var index in this.heap)
+    {
+        if(this.heap[index].p === priority)    
+        {
+            this.heap[index].values.push(element);
             return true;
-          }
         }
+    }
+    
+    return false;   
+};
 
-        return false;
-      },
 
-      /**
-       * @member PriorityQueue
-       * @returns the current number of elements in the queue.
-       */
-      size: function() {
-        return contents.length;
-      },
+PriorityMinQueue.prototype.trickleUp = function(index)
+{
+    // Checks to see if the priority of the checked queue is less than that
+    // of its parent in the heap. If so swap them in place in the array.
+    
+    // This is equivalent to a floor function in JavaScript.
+    var parent = ((index - 1)/2) >> 0;
 
-      /**
-       * @member PriorityQueue
-       * @returns true if the queue is empty, false otherwise.
-       */
-      empty: function() {
-        return contents.length === 0;
-      },
+    if(index === 0)
+    {
+        return;   
+    }
+    else if(this.heap[index].p < 
+        this.heap[parent].p)
+    {
+        this.heap.push(this.heap[parent]);
+        this.heap[parent] = this.heap[index];
+        this.heap[index] = this.heap.pop();
+        
+        this.trickleUp(parent);
+    }
+};
 
-      /**
-       * @member PriorityQueue
-       * @param object The object to be pushed onto the queue.
-       * @param priority The priority of the object.
-       */
-      push: function(object, priority) {
-        contents.push({object: object, priority: priority});
-        sorted = false;
-      }
-    };
+PriorityMinQueue.prototype.remove = function()
+{
+    var toReturn = null;
+    
+    if(this.heap.length > 0)
+    {
+        toReturn = this.heap[0].values.pop();
+        
+        
+        if(this.heap[0].values.length === 0)
+        {
+            if(this.heap.length > 1)
+            {
+                this.heap[0] = this.heap.pop();
+                this.heapRebuild(0);
+            }
+            else
+            {
+                this.heap = [];   
+            }
+        }
+    }
+    return toReturn;
+};
 
-    return self;
-  };
-})();
+PriorityMinQueue.prototype.heapRebuild = function(index)
+{
+    if(this.heap.length > 2 * index + 1)
+    {
+        var smallestChild = 2 * index + 1;
+        
+        if(this.heap.length > smallestChild + 1 && 
+            this.heap[smallestChild].p > this.heap[smallestChild + 1].p )
+        {
+            smallestChild++;
+        }
+    
+        if(this.heap[index].p > this.heap[smallestChild].p)
+        {
+            this.heap.push(this.heap[smallestChild]);
+            this.heap[smallestChild] = this.heap[index];
+            this.heap[index] = this.heap.pop();
+            
+            this.heapRebuild(smallestChild);
+        }
+        
+    }
+};
+
+PriorityMinQueue.prototype.isEmpty = function()
+{
+    return this.heap.length === 0;
+};
+

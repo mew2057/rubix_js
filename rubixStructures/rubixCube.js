@@ -826,12 +826,15 @@ RubixState.hash = function(state, cubies)
     for (index = 0; index < cubies.length; index++)
     {
         faceIndicies = RubixState.cubieMap[cubies[index]];
-        
         for (jndex = 0; jndex < faceIndicies.length; jndex++)
         {
-            face = state.cubies[jndex];
+            face = state.cubies[faceIndicies[jndex]];
             
-            hash = (hash << 3) | (face & 7);
+            // Muliplying by 8 is same as shifting 3 left; need to keep the numbers
+            // 64-bit as JS converts to 32-bit when using bitwise operators.
+            hash = (hash * 8) + (face & 7);
+            
+            console.log(hash.toString(2));
         }
     }
     

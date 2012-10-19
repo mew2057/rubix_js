@@ -75,4 +75,5 @@ ul.menu li a
     text-align: center;
     vertical-align: middle;
     color: black;
+    cursor: pointer;
 }
