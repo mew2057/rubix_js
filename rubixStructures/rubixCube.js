@@ -819,7 +819,7 @@ RubixState.cubieColorId = function(state, cubie)
     return colorId;
 };
 
-RubixState.hash = function(state, cubies)
+RubixState.hashCode = function(state, cubies)
 {
     var hash = 0, faceIndicies, face, index, jndex;
     
@@ -833,8 +833,6 @@ RubixState.hash = function(state, cubies)
             // Muliplying by 8 is same as shifting 3 left; need to keep the numbers
             // 64-bit as JS converts to 32-bit when using bitwise operators.
             hash = (hash * 8) + (face & 7);
-            
-            console.log(hash.toString(2));
         }
     }
     
@@ -878,6 +876,7 @@ RubixState.toString = function(state)
 };
 
 RubixState.corners = [0, 2, 5, 7, 12, 14, 17, 19];
+RubixState.corners7 = [0, 2, 5, 7, 12, 14, 17];
 RubixState.edgesTop = [9, 10, 13, 15, 16, 18];
 RubixState.edgesBottom = [1, 3, 4, 6, 8, 11];
 

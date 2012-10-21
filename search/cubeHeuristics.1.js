@@ -10,6 +10,38 @@ CubeHeuristics.corners = [0, 2, 5, 7, 12, 14, 17, 19];
 CubeHeuristics.edgesTop = [9, 10, 13, 15, 16, 18];
 CubeHeuristics.edgesBottom = [1, 3, 4, 6, 8, 11];
 
+CubeHeuristics.test = function()
+{
+    console.log("TEST");
+    var rubix = RubixState.createWithGoalState();
+    
+    var face, rots;
+    
+    /*
+    for (var i = 0; i < 100; i++)
+    {
+        face = Math.floor(Math.random() * 6);
+        rots = Math.floor(Math.random() * 3 + 1);
+        
+        RubixState.rotate(rubix, face, rots);        
+    }
+    */
+    
+    RubixState.rotate(rubix, 2, 1);
+    
+    console.log(RubixState.toString(rubix));
+    
+    var cornersH = CubeHeuristics.manhattanDistanceOfCorners(rubix);
+    var edgesTopH = CubeHeuristics.manhattanDistanceOfTopEdges(rubix);
+    var edgesBotH = CubeHeuristics.manhattanDistanceOfBottomEdges(rubix);
+    
+    console.log("Corners:  " + cornersH);
+    console.log("EdgesTop: " + edgesTopH);
+    console.log("EdgesBot: " + edgesBotH);
+    console.log("EdgesAll: " + CubeHeuristics.manhattanDistanceOfAllEdges(rubix));
+    console.log("Table H:  " + Math.max(cornersH, edgesTopH, edgesBotH));
+};
+
 CubeHeuristics.heuristic = function(rubixState)
 {
     return Math.max(CubeHeuristics.manhattanDistanceOfAllEdges(rubixState),
@@ -38,7 +70,7 @@ CubeHeuristics.manhattanDistanceOfAllEdges = function(rubixState)
 
 CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
 {
-    var sum = 0, moves = 0, cubieIndex, goalIndex, farSides;
+    var sum = 0, moves = 0, cubieIndex, goalIndex, farSides, rotation, alternateState, cubiesEqual;
     
     for (var index = 0; index < edges.length; index++)
     {        
@@ -64,6 +96,26 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
         else if (moves === 1) // The one rotation may not achieve the correct orientation
         {
             // Rotate to correct position and check orientation.
+            /*
+            cubiesEqual = false;
+            rotation = CubeHeuristics.correctRotation[cubieIndex][goalIndex];
+            
+            alternateState = RubixState.copy(rubixState);
+            
+            for (var jndex = 0; jndex < rotation.length; jndex++)
+            {
+                RubixState.rotate(alternateState, rotation[jndex], rotation[++jndex]);
+                
+                if (RubixState.areCubiesEqual(rubixState, CubeHeuristics.goalState, cubieIndex))
+                {
+                    cubiesEqual = true;
+                    break;
+                }
+            }
+            
+            if (!cubiesEqual)
+                moves += 1;
+            */
         }
         
         sum += moves;
@@ -78,7 +130,7 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
 
 CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
 {
-    var sum = 0, moves = 0, cubieIndex, goalIndex;
+    var sum = 0, moves = 0, cubieIndex, goalIndex, rotation, alternateState;
  
     for (var index = 0; index < CubeHeuristics.corners.length; index++)
     {            
@@ -102,6 +154,15 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
         else if (moves === 1) // The one rotation may not achieve the correct orientation
         {
             // Rotate to correct position and check orientation.
+            /*
+            rotation = CubeHeuristics.correctRotation[cubieIndex][goalIndex];
+            
+            alternateState = RubixState.copy(rubixState);
+            RubixState.rotate(alternateState, rotation[0], rotation[1]);
+            
+            if (!(RubixState.areCubiesEqual(rubixState, CubeHeuristics.goalState, cubieIndex)))
+                moves += 1;
+            */
         }
         
         sum += moves;
@@ -144,4 +205,175 @@ CubeHeuristics.farSides = {
     15 : [1, 11, 4, 10, 6],
     16 : [6, 9, 3, 8, 1],
     18 : [4, 10, 6, 9, 3]
+};
+
+/**
+ * A map which produces the rotation(s) needed to move the cubie at a specific location
+ * to the following position.
+ * 
+ * Usage: CubeHeuristics.correctRotation[current cubie location][target cubie location]
+ * 
+ * Returns an array of [face, rotations, (face, rotations)]
+ */
+CubeHeuristics.correctRotation = {
+    0  : {
+        2  : [0, 1, 5, 3],
+        5  : [0, 3, 1, 1],
+        7  : [0, 2],
+        12 : [1, 2],
+        17 : [1, 3, 5, 1],
+        19 : [5, 2]
+    },
+    1  : {
+        3  : [0, 3],
+        4  : [0, 1],
+        6  : [0, 2],
+        8  : [5, 1],
+        11 : [5, 1],
+        18 : [5, 2]
+    },
+    2  : {
+        0  : [5, 1, 0, 3],
+        5  : [0, 2],
+        7  : [0, 1, 3, 3],
+        14 : [3, 2],
+        17 : [5, 2],
+        19 : [5, 3, 3, 1]
+    },
+    3  : {
+        1  : [0, 1],
+        4  : [0, 2],
+        6  : [0, 3],
+        8  : [1, 3],
+        9  : [1, 1],
+        15 : [1, 2]
+    },
+    4  : {
+        1  : [0, 3],
+        3  : [0, 2],
+        6  : [0, 1],
+        10 : [3, 3],
+        11 : [3, 1],
+        16 : [3, 2]
+    },
+    5  : {
+        0  : [0, 1, 1, 3],
+        2  : [0, 2],
+        7  : [0, 3, 2, 1],
+        12 : [1, 1, 2, 3],
+        14 : [2, 2],
+        17 : [1, 2]
+    },
+    6  : {
+        1  : [0, 2],
+        3  : [0, 1],
+        4  : [0, 3],
+        9  : [2, 3],
+        10 : [2, 1],
+        13 : [2, 2]
+    },
+    7  : {
+        0  : [0, 2],
+        2  : [0, 3, 3, 1],
+        5  : [0, 1, 2, 3],
+        12 : [2, 2],
+        14 : [3, 3, 2, 1],
+        19 : [3, 2]
+    },
+    8  : {
+        1  : [5, 3],
+        3  : [1, 1],
+        9  : [1, 2],
+        11 : [5, 2],
+        15 : [1, 3],
+        18 : [5, 1]
+    },
+    9  : {
+        3  : [1, 3],
+        6  : [2, 1],
+        8  : [1, 2],
+        10 : [2, 2],
+        13 : [2, 3],
+        15 : [1, 1]
+    },
+    10 : {
+        4  : [3, 1],
+        6  : [2, 3],
+        9  : [2, 2],
+        11 : [3, 2],
+        13 : [2, 1],
+        16 : [3, 3]
+    },
+    11 : {
+        1  : [5, 1],
+        4  : [3, 3],
+        8  : [5, 2],
+        10 : [3, 2],
+        16 : [3, 1],
+        18 : [5, 3]
+    },
+    12 : {
+        0  : [1, 2],
+        5  : [2, 1, 1, 3],
+        7  : [2, 2],
+        14 : [4, 1, 2, 3],
+        17 : [1, 1, 4, 3],
+        19 : [4, 2]
+    },
+    13 : {
+        6  : [2, 2],
+        9  : [2, 1],
+        10 : [2, 3],
+        15 : [4, 3],
+        16 : [4, 1],
+        18 : [4, 2]
+    },
+    14 : {
+        2  : [3, 2],
+        5  : [2, 2],
+        7  : [2, 3, 3, 1],
+        12 : [2, 1, 4, 3],
+        17 : [4, 2],
+        19 : [4, 1, 3, 3]
+    },
+    15 : {
+        3  : [1, 2],
+        8  : [1, 1],
+        9  : [1, 3],
+        13 : [4, 1],
+        16 : [4, 2],
+        18 : [4, 3]
+    },
+    16 : {
+        4  : [3, 2],
+        10 : [3, 1],
+        11 : [3, 3],
+        13 : [4, 3],
+        15 : [4, 2],
+        18 : [4, 1]
+    },
+    17 : {
+        0  : [1, 1, 5, 3],
+        2  : [5, 2],
+        5  : [1, 2],
+        12 : [4, 1, 1, 3],
+        14 : [4, 2],
+        19 : [4, 3, 5, 1]
+    },
+    18 : {
+        1  : [5, 2],
+        8  : [5, 3],
+        11 : [5, 1],
+        13 : [4, 2],
+        15 : [4, 1],
+        16 : [4, 3]
+    },
+    19 : {
+        0  : [5, 2],
+        2  : [5, 1, 3, 3],
+        7  : [3, 2],
+        12 : [4, 2],
+        14 : [4, 3, 3, 1],
+        17 : [4, 1, 5, 3]
+    }
 };

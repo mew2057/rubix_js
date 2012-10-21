@@ -85,7 +85,7 @@ FileOperator.prototype.processFileText = function(input)
  */
 function generalErrorHandler(e)
 {
-    console.log("Error" + e);
+    console.log("Error" + e.toString());
 }
 
 /**
@@ -105,9 +105,8 @@ FileOperator.presentForDownload = function(data, fn)
         FileOperator.operator.toWrite = data.toString();
     }
     
-    // Initialize the sandboxed file system 
-    // I allocated 60 MB, but I don't think we'll need that much (will refine)
-    window.requestFileSystem(window.TEMPORARY, 60*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
+    // Initialize the sandboxed file system with 200 MB; to be refined
+    window.requestFileSystem(window.TEMPORARY, 200*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
 };
 
 /**

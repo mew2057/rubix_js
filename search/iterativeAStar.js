@@ -23,12 +23,27 @@ AStar.prototype.iterativeAStar = function(initialState)
     var sequence ="";
     var depth = 0;
     var goalNode = null;
+    
+    for (var i = 0; i < 9; i ++)
+    {
+        RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
+    }
+    
+    console.log(RubixState.verifyState(initialState));
+    console.log(RubixState.toString(initialState));
     var initialNode = new RubixNode(initialState);
+    
     
     depth = initialNode.fn;
 
     while(!goalNode)
     {
+        //TODO get Garbage collection to run here...
+        for(var index in this.record)
+        {
+            this.record.pop().parent = null;    
+        }
+        
         if(RubixState.isEqual(initialState,AStar.goalState))
         {
             goalNode = initialState;
@@ -39,6 +54,8 @@ AStar.prototype.iterativeAStar = function(initialState)
         }
         
         depth ++;
+
+        this.frontier = new PriorityMinQueue();
         
         console.log("The depth steadily increased:" + depth);
     }
@@ -83,8 +100,15 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
                 }
             }
         }
+       else
+        {
+            RubixNode.wipeBadChain(localNode);
+        }
+       
         if(!this.frontier.isEmpty())
         {
+            //this.record.push(localNode);
+            localNode = null;
             localNode = this.frontier.remove(); 
         }
         
