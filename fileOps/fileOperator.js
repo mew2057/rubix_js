@@ -114,27 +114,29 @@ FileOperator.presentForDownload = function(data, fn)
  * 
  * @param fs The file system that the file shall live on.
  */
-FileOperator.prototype.writeAndPresent = function(fs)
+FileOperator.prototype.writeAndPresent = function(fs, filename)
 {
-    fs.root.getFile('rubixOutput.txt',{create: true}, function(file){
+    if (!filename)
+        filename = 'rubixOutput.txt';
+    
+    fs.root.getFile(filename ,{create: true}, function(file) {
         FileOperator.operator.downloadURL = file.toURL();
         
-        file.createWriter(function(fileWriter){
-            fileWriter.onwriteend = function(e){
+        file.createWriter(function(fileWriter) {
+            fileWriter.onwriteend = function(e) {
               console.log("File Write Complete: " + e.toString());
 
-            // Presents the file created for downloading.
-            $('<a id="dl" href="' + FileOperator.operator.downloadURL + 
-                '" download="rubixOutput.txt">RECIEVE YOUR '+
-                'BIRTHRIGHT!</a>').prependTo("body");
+                // Presents the file created for downloading.
+                $('<a id="dl" href="' + FileOperator.operator.downloadURL + 
+                    '" download="' + filename + '">RECIEVE YOUR ' +
+                    'BIRTHRIGHT!</a>').prependTo("body");
             };
             
-            fileWriter.onerror = function(e){
+            fileWriter.onerror = function(e) {
               console.log("File Write Failed: " + e.toString());
             };
             
-            var blob = new Blob([FileOperator.operator.toWrite], 
-                {type: 'text/plain'});
+            var blob = new Blob([FileOperator.operator.toWrite], {type: 'text/plain'});
             
             fileWriter.write(blob);
         },generalErrorHandler);

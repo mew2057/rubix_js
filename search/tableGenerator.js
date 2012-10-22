@@ -13,29 +13,57 @@ TableGenerator.cornerDatabase = null;
 TableGenerator.edgesTopDatabase = null;
 TableGenerator.edgesBottomDatabase = null;
 
-TableGenerator.nodesGenerated = 0;
+TableGenerator.haltCheckbox = null;
 
 TableGenerator.generate = function()
-{
+{   
+    TableGenerator.haltCheckbox = $("#haltGeneration");
+    
     TableGenerator.cornerDatabase = new PatternDatabase(TableGenerator.cornerDbSize);
-//    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
-//    TableGenerator.edgesBottomDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
+    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
+    TableGenerator.edgesBottomDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
 
     var initialNode = new RubixNode(RubixState.createWithGoalState());
     
     TableGenerator.generateDLS(initialNode);
+    
+    FileOperator.presentForDownload(TableGenerator.cornerDatabase, "cornersTable.txt");
+    FileOperator.presentForDownload(TableGenerator.edgesTopDatabase, "edgesTopTable.txt");
+    FileOperator.presentForDownload(TableGenerator.edgesBottomDatabase, "edgesBottomTable.txt");
     
     console.log("DONE!");
 };
 
 TableGenerator.generateDLS = function(node)
 {
-    var cornersKey = RubixState.hashCode(node.rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
-    var cornersTableValue = TableGenerator.cornerDatabase.get(cornersKey);
+    if (TableGenerator.haltCheckbox.attr("checked"));
+        return;
     
-    if (cornersTableValue === 0 || node.depth < cornersTableValue)
-        TableGenerator.cornerDatabase.set(cornersKey, node.depth);
+    var key, value;
     
+    // Corners
+    key = RubixState.hashCode(node.rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
+    value = TableGenerator.cornerDatabase.get(key);
+    
+    if (key === 0 || node.depth < value)
+        TableGenerator.cornerDatabase.set(key, node.depth);
+    
+    // Edges Top
+    key = RubixState.hashCode(node.rubixState, RubixState.edgesTop) % TableGenerator.edgeDbSize;
+    value = TableGenerator.edgesTopDatabase.get(key);
+    
+    if (key === 0 || node.depth < value)
+        TableGenerator.edgesTopDatabase.set(key, node.depth);
+    
+    // Edges Bottom
+    key = RubixState.hashCode(node.rubixState, RubixState.edgesBottom) % TableGenerator.edgeDbSize;
+    value = TableGenerator.edgesBottomDatabase.get(key);
+    
+    if (key === 0 || node.depth < value)
+        TableGenerator.edgesBottomDatabase.set(key, node.depth);
+    
+    
+    // Base case
     if (node.depth === 11)
         return;
     
@@ -47,8 +75,7 @@ TableGenerator.generateDLS = function(node)
         TableGenerator.generateDLS(successors[index]);
     }
     
-    if (TableGenerator.nodesGenerated++ % 1000 === 0)
-        console.log("Nodes: " + TableGenerator.nodesGenerated);
+    console.log("Node");
 };
 
 TableGenerator.generateBreadth = function()

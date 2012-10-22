@@ -17,7 +17,7 @@ CubeHeuristics.test = function()
     
     var face, rots;
     
-    /*
+    
     for (var i = 0; i < 100; i++)
     {
         face = Math.floor(Math.random() * 6);
@@ -25,9 +25,8 @@ CubeHeuristics.test = function()
         
         RubixState.rotate(rubix, face, rots);        
     }
-    */
     
-    RubixState.rotate(rubix, 2, 1);
+    //RubixState.rotate(rubix, 2, 1);
     
     console.log(RubixState.toString(rubix));
     

@@ -4,6 +4,8 @@
     A node representation of state for search trees.
    --------------*/
 
+//RubixNode.statePool = [];
+//RubixNode.nodePool = [];
 
 /**
  * Defines an object to represent a node on the IDA* search tree for a rubik's cube.
@@ -15,32 +17,47 @@
  */
 function RubixNode(state, parent, action)
 {
-    this.nodeAction = null;
-    if(action)
-    {
-        RubixState.rotate(state, action[0], action[1]);
-        this.nodeAction =  ((0 | action[0]) << 4) | action[1];
-   
-    }
-    
+    this.init(state,parent,action);    
+}
+
+RubixNode.prototype.init = function(state, parent, action)
+{
     this.rubixState = state;
+    this.setAction(action); 
+    
+
     this.parentNode = parent;
-    
-    
-    this.rc = 0;
-    
+    this.initParentDetails(parent);
+};
+
+RubixNode.prototype.initParentDetails = function(parent)
+{
     if (parent)
     {        
         this.depth = parent.depth + 1;
         this.fn = CubeHeuristics.heuristic(this.rubixState) + this.depth;
-        parent.rc++;
+
+        parent.rc ++;
     }
     else
     {
         this.depth = 0;
         this.fn = CubeHeuristics.heuristic(this.rubixState);
-    }
-}
+        this.rc = 0;
+    }    
+};
+
+RubixNode.prototype.setAction = function(action)
+{
+    this.nodeAction = null;
+
+    if(action)
+    {
+        //RubixState.rotate(this.rubixState, action[0], action[1]);
+        this.nodeAction =  ((0 | action[0]) << 4) | action[1];
+   
+    }  
+};
 
 /**
  * Retrieves and generates nodes for all possible states that may follow the 
@@ -67,29 +84,53 @@ RubixNode.getSuccessors = function(node)
         for(var j = 1; j < 4; j++)
         {
             // Create a new node with a copy of the data then rotate the state.            
-            successors.push(new RubixNode(RubixState.copy(node.rubixState), node, [i, j]));
+            successors.push(
+                RubixNode.buildNode(null,//RubixNode.statePool.pop(),
+                                    RubixState.copyAndRotate(node.rubixState, null,
+                                                       // RubixNode.statePool.pop(),
+                                                        [i,j]), 
+                                    node, 
+                                    [i, j]));
         }   
     }    
 
     return successors;
 };
 
+RubixNode.buildNode  = function(node, state, parentNode, action)
+{
+    /*
+    if(node)
+    {
+        node.init(state,parentNode,action);
+    }
+    else
+    {*/
+        //console.log("making new node");
+        node = new RubixNode(state, parentNode, action);
+    //}
+        
+    return node;
+};
+
 RubixNode.wipeBadChain = function(node)
 {
     if(node.parentNode)
-    {
+    {   
         node.parentNode.rc--;
-        
-        if(node.parentNode.rc === 0)
+        if(node.parentNode.rc === 0 && node.parentNode.depth !== 0)
         {
             RubixNode.wipeBadChain(node.parentNode);    
         }
+        //RubixNode.statePool.push(node.rubixState);
+        
+        node.rubixState = null;
         node.parentNode = null;    
-        node.successors = null;
         node.nodeAction = null;
         node.rc = null;
         node.depth = null;
         node.fn = null;
+        //RubixNode.nodePool.push(node);
     }
     
 };

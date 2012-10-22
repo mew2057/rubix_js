@@ -7,13 +7,12 @@
  * A full representation of a single Rubik's cube state.
  * @return a default Rubik's state (i.e. an array of 20 undefined cubies)
  */
-function RubixState()
+function RubixState(buffer)
 {
     //*=face +=color -=unused
     //-***-+++ 2 unused bits per face 2*20 = 40 40/8 = 5 bytes wasted per state. 
     // (48 bytes total [plus some overhead], pretty damn good).
-    this.cubies = null;   
-    
+    this.cubies = buffer ? new Uint8Array(buffer) : null;
 }
 
 /**
@@ -661,10 +660,6 @@ RubixState.verifyState = function(state)
     return true;   
 };
 
-RubixState.findCornerPermutations = function(f1, f2, f3, cubeFace1, cubeFace2, cubFace3)
-{
-    
-};
 
 /**
  * Creates a UInt8 face state with the following binary encoding: -***-+++ 
@@ -720,10 +715,27 @@ RubixState.createFace = function(color, face)
  */
 RubixState.copy = function(state)
 {
-    var newState = new RubixState(), copy = state.cubies.buffer.slice(0);
-    newState.cubies = new Uint8Array(copy);   
+    return new RubixState(state.cubies.buffer.slice(0));
+};
+
+RubixState.copyAndRotate = function (baseState, copiedState,actions)
+{
+    /*
+    if(copiedState) 
+    {
+        for(var index in baseState)
+        {
+            copiedState.cubies[index] = baseState.cubies[index];    
+        }
+    }
+    else
+    {*/
+        copiedState = RubixState.copy(baseState);
+    //}
     
-    return newState;
+    RubixState.rotate(copiedState, actions[0],actions[1]);
+    
+    return copiedState;
 };
 
 /**
@@ -741,7 +753,7 @@ RubixState.isEqual = function(state1, state2)
      */
     for(var index = 0, length = state1.cubies.length; (index < length) & equal; index ++)
     {
-        equal = (state1.cubies[index] === state2.cubies[index]);        
+        equal = (state1.cubies[index] === state2.cubies[index]);     
     }
 
     return equal;

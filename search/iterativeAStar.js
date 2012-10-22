@@ -23,14 +23,19 @@ AStar.prototype.iterativeAStar = function(initialState)
     var sequence ="";
     var depth = 0;
     var goalNode = null;
-    
-    for (var i = 0; i < 9; i ++)
+    /*
+    for (var i = 0; i < 10; i ++)
     {
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
-    }
-    
+    }*/
+    //RubixState.rotate(initialState, 4, 1);
+    //RubixState.rotate(initialState, 2, 3);
+
+
     console.log(RubixState.verifyState(initialState));
     console.log(RubixState.toString(initialState));
+        //return;
+
     var initialNode = new RubixNode(initialState);
     
     
@@ -54,13 +59,17 @@ AStar.prototype.iterativeAStar = function(initialState)
         }
         
         depth ++;
-
+        if(depth === 5.5)
+        {
+            break;   
+        }
         this.frontier = new PriorityMinQueue();
         
         console.log("The depth steadily increased:" + depth);
     }
     
     console.log(this.pathFromNode(goalNode));
+    console.log(goalNode.rubixState.cubies, "\n", AStar.goalState.cubies);//,RubixState.toString(goalNode));
     sequence =this.pathFromNode(goalNode);
     
     return sequence;
@@ -84,27 +93,31 @@ AStar.prototype.iterativeAStar = function(initialState)
 AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
 {      
     var localNode = currentNode;
+    var isGoal = false;
     var successors = null;
 
     do{
-        
         if(localNode.fn < depth)
         {
-            successors = RubixNode.getSuccessors(localNode);
-                
+            successors = RubixNode.getSuccessors(localNode);        
+            
             for (var index = 0; index< successors.length; index++)
             {            
                 if(successors[index].fn <= depth)
                 {
                     this.frontier.insert(successors[index].fn, successors[index]);    
                 }
+                else
+                {
+                    RubixNode.wipeBadChain(successors[index]);   
+                }
             }
         }
        else
         {
-            RubixNode.wipeBadChain(localNode);
+          RubixNode.wipeBadChain(localNode);
         }
-       
+        
         if(!this.frontier.isEmpty())
         {
             //this.record.push(localNode);
@@ -112,12 +125,12 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
             localNode = this.frontier.remove(); 
         }
         
+        isGoal = RubixState.isEqual(localNode.rubixState, AStar.goalState);
+
         console.log("popped");
-    }while(!this.frontier.isEmpty() && !RubixState.isEqual(localNode.rubixState, 
-        AStar.goalState));
+    }while(!this.frontier.isEmpty() && !isGoal);
     
- 
-    return RubixState.isEqual(localNode.rubixState,AStar.goalState) ?localNode: null;  
+    return isGoal ? localNode : null;  
 };
 
 /**
