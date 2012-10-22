@@ -23,9 +23,7 @@ function RubixNode(state, parent, action)
 RubixNode.prototype.init = function(state, parent, action)
 {
     this.rubixState = state;
-    this.setAction(action); 
-    
-
+    this.setAction(action);     
     this.parentNode = parent;
     this.initParentDetails(parent);
 };
@@ -85,11 +83,9 @@ RubixNode.getSuccessors = function(node)
             // Create a new node with a copy of the data then rotate the state.            
             successors.push(
                 RubixNode.buildNode(RubixNode.nodePool.pop(),
-                                    RubixState.copyAndRotate(node.rubixState, //null,
-                                                       RubixNode.statePool.pop(),
-                                                        [i,j]), 
-                                    node, 
-                                    [i, j]));
+                                    RubixState.copyAndRotate(node.rubixState, 
+                                        RubixNode.statePool.pop(), [i,j]), 
+                                    node, [i, j]));
         }   
     }    
 
@@ -105,7 +101,6 @@ RubixNode.buildNode  = function(node, state, parentNode, action)
     }
     else
     {
-        //console.log("making new node");
         node = new RubixNode(state, parentNode, action);
     }
         

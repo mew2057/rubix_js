@@ -722,16 +722,7 @@ RubixState.copyAndRotate = function (baseState, copiedState,actions)
 {
     if(copiedState) 
     {
-        copiedState.cubies = new Uint8Array(baseState.cubies.buffer.slice(0));
-        
-        /*
-        for(var index in baseState)
-        {
-            console.log("before", baseState.cubies[index]);
-            copiedState.cubies[index] = baseState.cubies[index]; 
-                        console.log("after", baseState.cubies[index]);
-
-        }*/
+        copiedState.cubies.set(baseState.cubies);
     }
     else
     {

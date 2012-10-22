@@ -24,13 +24,10 @@ AStar.prototype.iterativeAStar = function(initialState)
     var depth = 0;
     var goalNode = null;
     /*
-    for (var i = 0; i < 10; i ++)
+    for (var i = 0; i < 6; i ++)
     {
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
     }*/
-    //RubixState.rotate(initialState, 4, 1);
-    //RubixState.rotate(initialState, 2, 3);
-
 
     console.log(RubixState.verifyState(initialState));
     console.log(RubixState.toString(initialState));
@@ -59,11 +56,11 @@ AStar.prototype.iterativeAStar = function(initialState)
         }
         
         depth ++;
-        
+        /*
         if(depth === 5.5)
         {
             break;   
-        }
+        }*/
         this.frontier = new PriorityMinQueue();
         
         console.log("The depth steadily increased:" + depth);
