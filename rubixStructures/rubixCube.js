@@ -167,7 +167,6 @@ RubixState.rotate = function(state, face, rotations)
  * @param rotations The number of counterclockwise rotations [1-3].
  * @return A Uint8 with the following bit pattern: -***-+++ where:
  *  - : null 
- *  + : color
  *  * : face
  */
 RubixState.rotateFace = function(faceState, face, rotations)

@@ -45,7 +45,7 @@ FileOperator.prototype.nullEffects = function(e)
 
 /**
  * Performs the file load and defines the behavior to take when loading is completed.
- * @param e The event.
+ * @param e The event
  */
 FileOperator.prototype.drop = function(e)
 {

@@ -7,9 +7,12 @@ function CubeHeuristics() {}
 CubeHeuristics.goalState = RubixState.createWithGoalState();
 
 CubeHeuristics.corners = [0, 2, 5, 7, 12, 14, 17, 19];
-CubeHeuristics.edgesTop = [9, 10, 13, 15, 16, 18];
-CubeHeuristics.edgesBottom = [1, 3, 4, 6, 8, 11];
+//6
+CubeHeuristics.edges = [9, 10, 13, 15, 16, 18, 1, 3, 4, 6, 8, 11];
+/*
 
+CubeHeuristics.edgesTop = [9, 10, 13, 15, 16, 18];
+CubeHeuristics.edgesBottom = [1, 3, 4, 6, 8, 11];*/
 CubeHeuristics.test = function()
 {
     console.log("TEST");
@@ -54,33 +57,32 @@ take at least 2 moves to right it. 3 moves for sides.
 
 CubeHeuristics.manhattanDistanceOfTopEdges = function(rubixState)
 {
-    return CubeHeuristics.manhattanDistanceOfEdges(rubixState, CubeHeuristics.edgesTop);
+    return CubeHeuristics.manhattanDistanceOfEdges(rubixState, CubeHeuristics.edges,0,6);
 };
 
 CubeHeuristics.manhattanDistanceOfBottomEdges = function(rubixState)
 {
-    return CubeHeuristics.manhattanDistanceOfEdges(rubixState, CubeHeuristics.edgesBottom);
+    return CubeHeuristics.manhattanDistanceOfEdges(rubixState, CubeHeuristics.edges,6,6);
 };
 
 CubeHeuristics.manhattanDistanceOfAllEdges = function(rubixState)
 {
-    return CubeHeuristics.manhattanDistanceOfEdges(rubixState, CubeHeuristics.edgesBottom.concat(CubeHeuristics.edgesTop));
+    return CubeHeuristics.manhattanDistanceOfEdges(rubixState,CubeHeuristics.edges, 0,12) //CubeHeuristics.edgesBottom.concat(CubeHeuristics.edgesTop));
 };
 
-CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
+CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges,offset, size)
 {
-    var sum = 0, moves = 0, cubieIndex, goalIndex, farSides, rotation, alternateState, cubiesEqual;
+    var sum = 0, moves = 0, cubieIndex, goalIndex;//, rotation, alternateState, cubiesEqual;
     
-    for (var index = 0; index < edges.length; index++)
+    for (var index = offset; index < offset+size; index++)
     {        
         moves = 0;
         
         cubieIndex = RubixState.findCubie(CubeHeuristics.goalState, edges[index], rubixState);
         goalIndex = RubixState.findCubie(rubixState, cubieIndex, CubeHeuristics.goalState);
         
-        farSides = CubeHeuristics.farSides[cubieIndex];
         // If it's a far side, need at least 2 moves to correct it's position.
-        if (farSides.indexOf(goalIndex) !== -1)
+        if ( CubeHeuristics.farSides[cubieIndex].indexOf(goalIndex) !== -1)
             moves = 2;
         // Otherwise, if it's not already in the correct position.
         else if (cubieIndex !== goalIndex)
@@ -129,7 +131,7 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
 
 CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
 {
-    var sum = 0, moves = 0, cubieIndex, goalIndex, rotation, alternateState;
+    var sum = 0, moves = 0, cubieIndex, goalIndex;//, rotation, alternateState;
  
     for (var index = 0; index < CubeHeuristics.corners.length; index++)
     {            
