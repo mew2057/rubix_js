@@ -114,10 +114,9 @@ FileOperator.presentForDownload = function(data, fn)
  * 
  * @param fs The file system that the file shall live on.
  */
-FileOperator.prototype.writeAndPresent = function(fs, filename)
+FileOperator.prototype.writeAndPresent = function(fs)
 {
-    if (!filename)
-        filename = 'rubixOutput.txt';
+    var filename = 'rubixOutput.txt';
     
     fs.root.getFile(filename ,{create: true}, function(file) {
         FileOperator.operator.downloadURL = file.toURL();

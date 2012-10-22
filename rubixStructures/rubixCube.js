@@ -718,7 +718,7 @@ RubixState.copy = function(state)
     return new RubixState(state.cubies.buffer.slice(0));
 };
 
-RubixState.copyAndRotate = function (baseState, copiedState,actions)
+RubixState.copyAndRotate = function (baseState, copiedState, face, rots)
 {
     if(copiedState) 
     {
@@ -729,7 +729,7 @@ RubixState.copyAndRotate = function (baseState, copiedState,actions)
         copiedState = RubixState.copy(baseState);
     }
     
-    RubixState.rotate(copiedState, actions[0],actions[1]);
+    RubixState.rotate(copiedState, face, rots);
     
     return copiedState;
 };

@@ -13,55 +13,58 @@ TableGenerator.cornerDatabase = null;
 TableGenerator.edgesTopDatabase = null;
 TableGenerator.edgesBottomDatabase = null;
 
-TableGenerator.haltCheckbox = null;
+TableGenerator.depth = 2;
 
 TableGenerator.generate = function()
-{   
-    TableGenerator.haltCheckbox = $("#haltGeneration");
-    
+{     
     TableGenerator.cornerDatabase = new PatternDatabase(TableGenerator.cornerDbSize);
-    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
-    TableGenerator.edgesBottomDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
-
+//    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
+//    TableGenerator.edgesBottomDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
+    
+    TableGenerator.generateBreadth();
+    
+    /*
     var initialNode = new RubixNode(RubixState.createWithGoalState());
     
     TableGenerator.generateDLS(initialNode);
-    
-    FileOperator.presentForDownload(TableGenerator.cornerDatabase, "cornersTable.txt");
-    FileOperator.presentForDownload(TableGenerator.edgesTopDatabase, "edgesTopTable.txt");
-    FileOperator.presentForDownload(TableGenerator.edgesBottomDatabase, "edgesBottomTable.txt");
+
+    FileOperator.presentForDownload(TableGenerator.cornerDatabase);
+//    FileOperator.presentForDownload(TableGenerator.edgesTopDatabase, "edgesTopTable.txt");
+//    FileOperator.presentForDownload(TableGenerator.edgesBottomDatabase, "edgesBottomTable.txt");
+    */
     
     console.log("DONE!");
 };
 
 TableGenerator.generateDLS = function(node)
 {
-    if (TableGenerator.haltCheckbox.attr("checked"));
-        return;
-    
     var key, value;
     
     // Corners
     key = RubixState.hashCode(node.rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
     value = TableGenerator.cornerDatabase.get(key);
     
-    if (key === 0 || node.depth < value)
+    if (value === 0 || value > node.depth)
         TableGenerator.cornerDatabase.set(key, node.depth);
-    
+    else // State already enumerated
+        return;
+/*  
     // Edges Top
     key = RubixState.hashCode(node.rubixState, RubixState.edgesTop) % TableGenerator.edgeDbSize;
     value = TableGenerator.edgesTopDatabase.get(key);
     
-    if (key === 0 || node.depth < value)
+    if (value === 0 || value > node.depth)
         TableGenerator.edgesTopDatabase.set(key, node.depth);
     
     // Edges Bottom
     key = RubixState.hashCode(node.rubixState, RubixState.edgesBottom) % TableGenerator.edgeDbSize;
     value = TableGenerator.edgesBottomDatabase.get(key);
     
-    if (key === 0 || node.depth < value)
+    if (value === 0 || value > node.depth)
         TableGenerator.edgesBottomDatabase.set(key, node.depth);
+*/    
     
+    //console.log("Node");
     
     // Base case
     if (node.depth === 11)
@@ -74,8 +77,6 @@ TableGenerator.generateDLS = function(node)
         successors[index].parent = null;
         TableGenerator.generateDLS(successors[index]);
     }
-    
-    console.log("Node");
 };
 
 TableGenerator.generateBreadth = function()
@@ -83,7 +84,7 @@ TableGenerator.generateBreadth = function()
     var initialNode = new RubixNode(RubixState.createWithGoalState());
     
     var nodes = RubixNode.getSuccessors(initialNode), successors, depth, index;
-    var cornersKey, edgesTopKey, edgesBottomKey;
+    var key, value;
     
     TableGenerator.cornerDatabase = new PatternDatabase(TableGenerator.cornerDbSize);
 //    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
@@ -95,13 +96,14 @@ TableGenerator.generateBreadth = function()
         
         for (index = 0; index < nodes.length; index++)
         {
-            cornersKey = RubixState.hashCode(nodes[index].rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
-            //console.log("H:" + RubixState.hashCode(nodes[index].rubixState, RubixState.corners7));
-            //console.log("K:" + cornersKey);
+            key = RubixState.hashCode(nodes[index].rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
+            value = TableGenerator.cornerDatabase.get(key);
             
             // Do not replace existing value as that will effect an inadmissible heuristic.
-            if (TableGenerator.cornerDatabase.get(cornersKey) === 0)
-                TableGenerator.cornerDatabase.set(cornersKey, nodes[index].depth);
+            if (value === 0 || value > nodes[index].depth)
+                TableGenerator.cornerDatabase.set(key, nodes[index].depth);
+            else // State already enumerated
+                continue;
             
             // TODO - edges
             

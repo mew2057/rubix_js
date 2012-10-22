@@ -56,12 +56,8 @@ AStar.prototype.iterativeAStar = function(initialState)
         }
         
         depth ++;
-        /*
-        if(depth === 5.5)
-        {
-            break;   
-        }*/
         this.frontier = new PriorityMinQueue();
+        console.log(RubixNode.nodePool.length);
         
         console.log("The depth steadily increased:" + depth);
     }
@@ -93,7 +89,7 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
     var isGoal = false;
     var successors = null;
 
-    do{
+    do {
         if(localNode.fn < depth)
         {
             successors = RubixNode.getSuccessors(localNode);        
@@ -110,9 +106,9 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
                 }
             }
         }
-       else
+        else
         {
-          RubixNode.wipeBadChain(localNode);
+            RubixNode.wipeBadChain(localNode);
         }
         
         if(!this.frontier.isEmpty())
@@ -141,7 +137,7 @@ AStar.prototype.pathFromNode = function(node)
     // If the depth is > 1 recursion must be done.
     // else if the depth is 1 the action sequence is done.
     // else the cube was already solved when it reached this search.
-    if(node.depth > 1)
+    if (node.depth > 1)
     {
         return this.pathFromNode(node.parentNode) + ", " + RubixNode.nodeActionToString(node);
     }
