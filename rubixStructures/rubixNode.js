@@ -4,8 +4,8 @@
     A node representation of state for search trees.
    --------------*/
 
-//RubixNode.statePool = [];
-//RubixNode.nodePool = [];
+RubixNode.statePool = [];
+RubixNode.nodePool = [];
 
 /**
  * Defines an object to represent a node on the IDA* search tree for a rubik's cube.
@@ -53,7 +53,6 @@ RubixNode.prototype.setAction = function(action)
 
     if(action)
     {
-        //RubixState.rotate(this.rubixState, action[0], action[1]);
         this.nodeAction =  ((0 | action[0]) << 4) | action[1];
    
     }  
@@ -85,9 +84,9 @@ RubixNode.getSuccessors = function(node)
         {
             // Create a new node with a copy of the data then rotate the state.            
             successors.push(
-                RubixNode.buildNode(null,//RubixNode.statePool.pop(),
-                                    RubixState.copyAndRotate(node.rubixState, null,
-                                                       // RubixNode.statePool.pop(),
+                RubixNode.buildNode(RubixNode.nodePool.pop(),
+                                    RubixState.copyAndRotate(node.rubixState, //null,
+                                                       RubixNode.statePool.pop(),
                                                         [i,j]), 
                                     node, 
                                     [i, j]));
@@ -99,16 +98,16 @@ RubixNode.getSuccessors = function(node)
 
 RubixNode.buildNode  = function(node, state, parentNode, action)
 {
-    /*
+    
     if(node)
     {
         node.init(state,parentNode,action);
     }
     else
-    {*/
+    {
         //console.log("making new node");
         node = new RubixNode(state, parentNode, action);
-    //}
+    }
         
     return node;
 };
@@ -122,7 +121,7 @@ RubixNode.wipeBadChain = function(node)
         {
             RubixNode.wipeBadChain(node.parentNode);    
         }
-        //RubixNode.statePool.push(node.rubixState);
+        RubixNode.statePool.push(node.rubixState);
         
         node.rubixState = null;
         node.parentNode = null;    
@@ -130,7 +129,7 @@ RubixNode.wipeBadChain = function(node)
         node.rc = null;
         node.depth = null;
         node.fn = null;
-        //RubixNode.nodePool.push(node);
+        RubixNode.nodePool.push(node);
     }
     
 };

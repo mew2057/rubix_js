@@ -59,6 +59,7 @@ AStar.prototype.iterativeAStar = function(initialState)
         }
         
         depth ++;
+        
         if(depth === 5.5)
         {
             break;   
@@ -69,7 +70,6 @@ AStar.prototype.iterativeAStar = function(initialState)
     }
     
     console.log(this.pathFromNode(goalNode));
-    console.log(goalNode.rubixState.cubies, "\n", AStar.goalState.cubies);//,RubixState.toString(goalNode));
     sequence =this.pathFromNode(goalNode);
     
     return sequence;
