@@ -1,3 +1,11 @@
+/* ----------
+   rubixCube.js
+   
+   Represents the Rubik's cube as a JavaScript object.
+   ---------- */
+
+
+// Defines the function that has static functions attached.
 function RubixState(){}
 
 
@@ -112,8 +120,9 @@ RubixState.createWithString = function(text)
              45 46 47
              48  W 50
              51 52 53
-  
     */
+    
+    // Creates an array view to an array buffer.
     var state = new Uint8Array(new ArrayBuffer(20));
 
     try{
@@ -157,7 +166,7 @@ RubixState.createWithString = function(text)
         state[18] = RubixState.processCubie([[faces[4][5],4],[faces[3][7],3]],18);
         state[19] = RubixState.processCubie([[faces[5][1],5],[faces[4][7],4]],19);
         
-        // Do the edge pairity check.
+        // Do the edge parity check.
         if(RubixState.edgeWindowSum % 2 === 1)
         {
             RubixState.edgeWindowSum =0;
@@ -201,7 +210,7 @@ RubixState.createWithString = function(text)
         }
     }
 
-/*
+    /*
     for(var i =0; i < 6; i++)
     {
         for(var j = 1; j < 4; j++)
@@ -212,15 +221,24 @@ RubixState.createWithString = function(text)
         RubixState.rotate(state, i,2 - (j - 2));
         }
     }
-*/ 
     console.log(RubixState.toString(state));
+    */
+    
     return state;
 };
 
+/**
+ * A toString function for a RubixState generated array.
+ * 
+ * @param state The state to convert to a human readable string.
+ * 
+ * @return A string containing the state organized as a rubik cube.
+ */
 RubixState.toString = function(state)
 {
     var tempIndex = 0, toReturn ="   ", focusedCubie="",offset = 0, limit = 0;
     
+    // Set up the face array as a go between for the string and state.
     RubixState.outputFaces.length = 54;
     RubixState.outputFaces[4]  = 'R';
     RubixState.outputFaces[19] = 'G';
@@ -229,20 +247,23 @@ RubixState.toString = function(state)
     RubixState.outputFaces[40] = 'O';
     RubixState.outputFaces[49] = 'W';      
     
+    // Load the cubies into the array.
     for(var index=0; index < state.length; index++) 
     {
+        // Get the location that the index coresponds to.
         tempIndex = RubixState.cubieOutputMapping[index].faces.indexOf(state[index] & 7);
         
         if(tempIndex == -1)
         {
-            console.log(index, state[index] & 7, state[index] >> 3);
             return "Bad State";
         }
         
+        // Get the string for the cubie and determine if this is an edge or corner.
         focusedCubie = RubixState.cubies.indicies[state[index] >> 3];
         limit = index < 8 ? 3 : 2;
         
-        for(tempIndex, offset = 0; offset < limit;tempIndex++,offset++)
+        // For the number of faces use a lookaside mapping to place the correct color values in the array.
+        for(tempIndex, offset = 0; offset < limit; tempIndex++,offset++)
         {        
             tempIndex = tempIndex % limit;
             RubixState.outputFaces[
@@ -251,6 +272,7 @@ RubixState.toString = function(state)
         }
     }
     
+    // Simply creates the String.
     for(index = 0; index < RubixState.outputFaces.length; index++)
     {
         toReturn +=RubixState.outputFaces[index];
@@ -271,25 +293,50 @@ RubixState.toString = function(state)
     return toReturn;
 };
 
+/**
+ * Generically processes a cubie and selects whether it is a corner or an edge.
+ * 
+ * @param faces An array of face arrays. Each face array contains a character and 
+ *      the face that the character corresponds to.
+ * 
+ * @param cubie The proposed index of the cubie in the final state.
+ * 
+ * @return A bit mapping of the cubie containing face and cubie number.
+ */
 RubixState.processCubie = function (faces, cubie)
 {
     var cubieSum = 0;
+    
+    // Calculate the sum of the faces to aid in determining which cubie this is.
     for(var index in faces)
     {
         cubieSum += RubixState.faceMap[faces[index][0]].value;        
     }
-    return (faces.length === 3 ? RubixState.processCorner:RubixState.processSide)(faces, cubieSum, cubie);
+    
+    // Run the specialized routine for either corner or edge.
+    return (faces.length === 3 ? RubixState.processCorner:RubixState.processEdge)(faces, cubieSum, cubie);
 };
 
 /**
  * Processes an array of faces and converts it to the representation for a cubie.
- * In all of these cases the ordering of the faces matters logically, eg RYB is oriented
+ * In all of these cases the ordering of the faces matters implicitly, eg RYB is oriented
  * by the red face and the preceding faces are Y then B.
+ * 
+ * @param faces An array of face arrays. Each face array contains a character and 
+ *      the face that the character corresponds to.
+ * 
+ * @param cubieSum The sum of the cubie's faces.
+ * 
+ * @return A bit mapping of the cubie containing face and cubie number.
+ * 
+ * @throws CError A cubie error for corners that aren't properly specified (ordering/number of faces).
  */
 RubixState.processCorner = function(faces, cubieSum)
 {
+    // The composition is the combination of cubie number and face value.
     var composition = 0, testString ='';
     
+    // Find the leading face or determine that there are too many faces.
     for(var index = 0; index <= faces.length;  index++)
     {
         if(index === faces.length)
@@ -301,6 +348,7 @@ RubixState.processCorner = function(faces, cubieSum)
             break;   
         }
     }    
+    // Determine the right cubie value and generate the composition and testString.
     switch (cubieSum)
     {
         // RYG
@@ -347,6 +395,7 @@ RubixState.processCorner = function(faces, cubieSum)
             break;
     }
     
+    // Error check and execute a portion of parity checking.
     if(!RubixState.cubieIsValid(faces, testString))
     {
         throw "CError";
@@ -355,8 +404,21 @@ RubixState.processCorner = function(faces, cubieSum)
     return composition;
 };
 
-
-RubixState.processSide = function(faces,cubieSum, cubie)
+/**
+ * Generates the encoded value for an edge cubie and does error checking.
+ * 
+ * @param faces An array of face arrays. Each face array contains a character and 
+ *      the face that the character corresponds to.
+ * 
+ * @param cubieSum The sum of the cubie's faces.
+ * 
+ * @param cubie The index of the cubie in the proposed final state(needed for parity check).
+ * 
+ * @return A bit mapping of the cubie containing face and cubie number.
+ * 
+ * @throws EError An Edge error triggered by an improperly specified edge.
+ */
+RubixState.processEdge = function(faces,cubieSum, cubie)
 {
     var testString = '',composition = 0;
     
@@ -368,6 +430,8 @@ RubixState.processSide = function(faces,cubieSum, cubie)
         }
     }    
     
+    // If the leading value is neither R or O enter the center edge cubie switch.
+    // Else enter the top and bottom cubie switch (this cuts down on value overlap.
     if(index === 2)
     {
         switch (cubieSum)
@@ -454,6 +518,7 @@ RubixState.processSide = function(faces,cubieSum, cubie)
         }
     }
     
+    // Do error checking and contribute to the parity check.
     if(!RubixState.cubieIsValid(faces, testString, cubie))
     {
         throw "EError";
@@ -462,6 +527,19 @@ RubixState.processSide = function(faces,cubieSum, cubie)
     return composition;
 };
 
+/**
+ * A helper function to reduce cyclomatic complexity in processEdge. Finds the 
+ * index of a specified face character in a face array.
+ * 
+ * @param faces An array of face arrays. Each face array contains a character and 
+ *      the face that the character corresponds to.
+ * 
+ * @param faceChar The face charcter to find the index for.
+ * 
+ * @return The index of the sought face.
+ * 
+ * @throws FError The face was not found in the supplied faces.
+ */
 RubixState.faceIndex = function(faces, faceChar)
 {
     for(var index = 0; index < faces.length;  index++)
@@ -472,6 +550,7 @@ RubixState.faceIndex = function(faces, faceChar)
         }
     }    
     
+    // The face wasn't found.
     if(index == faces.length)
     {
         throw "FError";    
@@ -481,10 +560,25 @@ RubixState.faceIndex = function(faces, faceChar)
 };
 
 
-
+/**
+ * Verifies some local orientation details about the cubie and contributes to the 
+ * global parity check for either the edges or corners (depending on the supplied cubie.
+ * 
+ * @param faces An array of face arrays. Each face array contains a character and 
+ *      the face that the character corresponds to.
+ * 
+ * @param faceComp A string representing the face.
+ * 
+ * @param cubie The index of the cubie in the proposed final state (not used on corners.).
+ * 
+ * @throws DupeColorError Thrown if any duplicate colors are detected in the cubie.
+ * 
+ * @throws EWindowError Thrown if the cubie is an edge and it didn't exist on an edge window (pretty much impossible). 
+ */
 RubixState.cubieIsValid = function(faces, faceComp, cubie)
 {    
     var previousVals ='',found =false;
+    
     for(var index in faces)
     {
         // Verify that the colors in the cubie should be there.
@@ -496,11 +590,13 @@ RubixState.cubieIsValid = function(faces, faceComp, cubie)
         // Do parity checks
         if(faces.length == 3)
         {
+            // Corner
             RubixState.faceSet[faces[index][1]] += RubixState.cubies[faceComp].orientValues[faces[index][0]];
         }
         else if(cubie && RubixState.edgeWindows[cubie] == faces[index][1])
-
         {
+            
+            // Edge
             RubixState.edgeWindowSum += RubixState.cubies[faceComp].orientValues[faces[index][0]];
             found = true;
         }
@@ -514,6 +610,7 @@ RubixState.cubieIsValid = function(faces, faceComp, cubie)
         previousVals += faces[index][0];
     }
     
+    // IF this was an edge and the edge window wasn't found.
     if(cubie && !found)
     {
         throw "EWindowError";   
@@ -522,6 +619,17 @@ RubixState.cubieIsValid = function(faces, faceComp, cubie)
     return true;
 };
 
+/**
+ * Performs a rotation of a single face in the state.
+ * 
+ * @param state The RubixState array that is to be rotated on one face.
+ * 
+ * @param face The face the rotation is to occur about.
+ * 
+ * @param rotations The number of 90 degree motions to occur in this move (1-3)
+ * 
+ * @return The revised state.
+ */
 RubixState.rotate =function(state, face, rotations)
 {
     var indicies = RubixState.sideLookUpTable[face];
@@ -554,14 +662,24 @@ RubixState.rotate =function(state, face, rotations)
     }
 };
 
+/**
+ * Modifies the state of a single cubie in the rotation process.
+ * 
+ * @param cubieState A bit mappping of the cubie that is to be rotated.
+ * 
+ * @param face The face that the rotation is occuring on.
+ * 
+ * @param rotations The number of 90 degree motions to occur in this move (1-3)
+ * 
+ * @return The revised cubieState containg the new face.
+ */
 RubixState.rotateFace = function(cubieState, face, rotations)
-{
-    
+{    
     var faceVal = cubieState & 7;   
     var cubieVal = cubieState  - faceVal;
 
-
-    if ( RubixState.newFaceMap[face][faceVal])
+    // If the face has a mapping (isn't the same or opposite face) modify the state.
+    if (RubixState.newFaceMap[face][faceVal])
     {
         return cubieVal | RubixState.newFaceMap[face][faceVal][rotations];
     }
@@ -571,6 +689,15 @@ RubixState.rotateFace = function(cubieState, face, rotations)
     }
 };
 
+/**
+ * Performs a check to determine if two states are equivalent.
+ * 
+ * @param stateA The first RubixState ArrayBuffer to compare.
+ * 
+ * @param stateA The second RubixState ArrayBuffer to compare.
+ * 
+ * @return True if equivalent, false if not.
+ */
 RubixState.isEqual = function(stateA, stateB)
 {   
     /**
@@ -587,14 +714,54 @@ RubixState.isEqual = function(stateA, stateB)
     return true;  
 };
 
+/**
+ * Creates a copy of the RubixState ArrayBuffer, prevents rotation clobbering.
+ * 
+ * @param state The RubixState to copy.
+ * 
+ * @return A copy of the ArrayBuffer and a new TypedArray view.
+ */
 RubixState.copy = function(state)
 {
     return new Uint8Array(state.buffer.slice(0));
 };
 
+/**
+ * Hashes the corners of a supplied state for table lookup.
+ * 
+ * @param state The state to get a hash for.
+ * 
+ * @return A number with the hashed value.
+ */
+RubixState.hashCorners = function(state)
+{
+    /*
+     *hashPos: aggregates the hash position total (f1())
+     *hashOrient: aggregates the hash orientation total (f2())
+     *fact: A factorial used in the position portion of the hash.
+     *expo: The exponential value used in calculating the orientation portion of the hash.    
+    */
+    var hashPos = 0, hashOrient = 0, fact = 1, expo = 1; 
+    
+    for(var index = 1; index < 8; index++)
+    {
+        // f1(n) = sum(n! * state[n].value) from n=1 to n=7
+        fact *= (index + 1);
+        hashPos += (state[index] >> 3) * fact;
+        
+        // f2(n) = sum(3^n * state[n].face) from n=0 to n = 6
+        hashOrient += (state[index] & 7) + expo;
+        expo *= 3;
+    }
+    
+    // f(n) = 12*f1(n) + f2(n)
+    return hashPos*12 + hashOrient;
+};
+
 // The face value map used in tanslating moves to something human readable. 
 RubixState.faceValues = ['R','G','Y','B','O','W'];
 
+// A mapping of the face to it's arbitrary face value.
 RubixState.faceMap = {
     'R':{"value":0},
     'G':{"value":1},
@@ -615,10 +782,13 @@ RubixState.sideLookUpTable = [
     [ 4,19, 7,15, 1, 8, 0,12]  // white, bottom
 ];
 
+// A face set for corner parity checks.
 RubixState.faceSet = [];
 
+// The sum of edge windows.
 RubixState.edgeWindowSum = 0;
 
+// The position of a cubie in the state and the face that corresponds to the edge window for it.
 RubixState.edgeWindows ={
   8:0,
   9:1,
@@ -634,8 +804,10 @@ RubixState.edgeWindows ={
   19:4  
 };
 
+// An array used in data output for a state.
 RubixState.outputFaces = [];
 
+// A mapping that defines the translation of the state to a human readable form.
 RubixState.cubieOutputMapping={
    0:{"absolute":[ 0, 9,51], "faces":[0,1,5]},
    1:{"absolute":[ 2,53,17], "faces":[0,5,3]},

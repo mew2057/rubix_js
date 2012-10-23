@@ -90,11 +90,11 @@ TableGenerator.generateBreadth = function()
 //    TableGenerator.edgesTopDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
 //    TableGenerator.edgesBottomDatabase = new PatternDatabase(TableGenerator.edgeDbSize);
     
-    for (depth = 1; depth <= 11; depth++)
+    for (depth = 1; depth <= 5; depth++)
     {        
         for (index = 0; index < nodes.length; index++)
         {
-            key = RubixState.hashCode(nodes[index].rubixState, RubixState.corners7) % TableGenerator.cornerDbSize;
+            key = RubixState.hashCorners(nodes[index].rubixState);// % TableGenerator.cornerDbSize;
             value = TableGenerator.cornerDatabase.get(key);
             
             // Do not replace existing value as that will effect an inadmissible heuristic.
@@ -106,7 +106,7 @@ TableGenerator.generateBreadth = function()
             // TODO - edges
             
             successors = successors.concat(RubixNode.getSuccessors(nodes[index]));
-            nodes[index].parent = null;
+            RubixNode.wipeBadChain(nodes[index]);
             
             if (index % 250 === 0)
             {

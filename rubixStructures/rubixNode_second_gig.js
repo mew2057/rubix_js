@@ -13,10 +13,17 @@ RubixNode.faceCulling = {
 
 /**
  * Defines an object to represent a node on the IDA* search tree for a rubik's cube.
- * @param state The state to be wrapped by the node.
- * @param parent Optional - The parent used in retrieving the path.
- *
  * 
+ * @param state The state to be wrapped by the node.
+ * 
+ * @param parent The parent used in retrieving the path.
+ * 
+ * @param face The face that was rotated by an action.
+ * 
+ * @param rots The rotations caried out in the action. (if this and face are 
+ * supplied a rotation occurs)
+ * 
+ * @param createCopyState A flag that will toggle a deep copy the supplied state. 
  */
 function RubixNode(state, parent, face, rots,createCopyState)
 {
@@ -25,6 +32,7 @@ function RubixNode(state, parent, face, rots,createCopyState)
 
 RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
 {
+    // Handle the state.
     if(createCopyState)
     {
        // console.log("copyState",state);
@@ -41,6 +49,7 @@ RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
     
     this.nodeAction = null;
 
+    // Rotate if an action is supplied.
     if(face >= 0 && rots >= 0 )
     {
         this.nodeAction =  ((0 | face) << 4) | rots;
@@ -64,11 +73,24 @@ RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
         this.rc = 0;
     }
 };
-    
+
+/**
+ * Builds a node from the supplied details. To be used with the nodePool as it handles
+ * empty nodes when the pool is empty.
+ * 
+ * @param node The node that will be modified to represent a different node.
+ * 
+ * @param parentNode The parent node used in retrieving the path.
+ * 
+ * @param face The face that was rotated by an action.
+ * 
+ * @param rots The rotations caried out in the action. (if this and face are 
+ * supplied a rotation occurs)
+ * 
+ * @return The modified/created node.
+ */
 RubixNode.buildAndRotateNode  = function(node, parentNode, face, rots)
 {
-            //console.log("new node");
-
     if(node)
     {
         node.init(parentNode.rubixState,parentNode, face, rots);
@@ -86,6 +108,7 @@ RubixNode.buildAndRotateNode  = function(node, parentNode, face, rots)
  * invoking node's state.
  * 
  * @param node The node to retrieve successors for.
+ * 
  * @return The array of successors for the rubix cube, if a solution is found 
  *         within the array return the solution alone in an array.
  */
@@ -118,16 +141,25 @@ RubixNode.getSuccessors = function(node)
     return successors;
 };
 
-
+/**
+ * Wipes out a useless node from the tree and adds it to the node pool for reuse.
+ * If the parent node has no more children after this removal cascade up.
+ * 
+ * @param node The node to remove.
+ */
 RubixNode.wipeBadChain = function(node)
 {
+    // If not the root of the search.
     if(node.parentNode)
-    {   
+    {  
+        // Decrement the parent and check to see if it needs a wipe.
         node.parentNode.rc--;
         if(node.parentNode.rc === 0 && node.parentNode.depth !== 0)
         {
             RubixNode.wipeBadChain(node.parentNode);    
         }
+        
+        // Prep and load the node into the pool.
         node.parentNode = null;    
         node.nodeAction = null;
         node.rc = null;
@@ -141,6 +173,7 @@ RubixNode.wipeBadChain = function(node)
  * Returns a String with the node action pair for the supplied node.
  * 
  * @param node the node that the action is to be retrieved from.
+ * 
  * @return A String "face:rotations".
  */
 RubixNode.nodeActionToString = function(node)
