@@ -29,7 +29,7 @@ AStar.prototype.iterativeAStar = function(initialState)
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
     }*/
 
-    console.log(RubixState.verifyState(initialState));
+  //  console.log(RubixState.verifyState(initialState));
     console.log(RubixState.toString(initialState));
         //return;
 
