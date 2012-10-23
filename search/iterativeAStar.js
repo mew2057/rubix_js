@@ -28,7 +28,8 @@ AStar.prototype.iterativeAStar = function(initialState)
     {
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
     }*/
-
+// RubixState.rotate(initialState,0,1);
+  //RubixState.rotate(initialState,4,1);
   //  console.log(RubixState.verifyState(initialState));
     console.log(RubixState.toString(initialState));
         //return;
@@ -97,8 +98,7 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
             successors = RubixNode.getSuccessors(localNode);        
             
             for (var index = 0; index< successors.length; index++)
-            {            
-
+            {        
                 if(successors[index].fn <= depth)
                 {
                     this.frontier.insert(successors[index].fn, successors[index]);    
@@ -122,7 +122,7 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
         
         isGoal = RubixState.isEqual(localNode.rubixState, AStar.goalState);
 
-        console.log("popped");
+       console.log("popped");
     }while(!this.frontier.isEmpty() && !isGoal);
     
     return isGoal ? localNode : null;  
