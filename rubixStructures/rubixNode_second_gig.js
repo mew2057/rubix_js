@@ -15,24 +15,28 @@ RubixNode.faceCulling = {
  * Defines an object to represent a node on the IDA* search tree for a rubik's cube.
  * @param state The state to be wrapped by the node.
  * @param parent Optional - The parent used in retrieving the path.
- * @param action Optional - The action that was taken to reach this node.
- *          Has the following bit pattern: -###-@@@ where -:null #:face @:rotations
+ *
  * 
  */
-function RubixNode(state, parent, face, rots)
+function RubixNode(state, parent, face, rots,createCopyState)
 {
-    this.init(state,parent,face, rots);    
+    this.init(state,parent,face, rots,createCopyState);    
 }
 
-RubixNode.prototype.init = function(state, parent, face, rots)
+RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
 {
-    if(this.rubixState)
+    if(createCopyState)
     {
+       // console.log("copyState",state);
+        this.rubixState = RubixState.copy(state);
+    }
+    else if(this.rubixState)
+    {        
         this.rubixState.set(state);
     }
     else
     {
-        this.rubixState = new Uint8Array().set(state);
+        this.rubixState = state;    
     }
     
     this.nodeAction = null;
@@ -40,7 +44,7 @@ RubixNode.prototype.init = function(state, parent, face, rots)
     if(face >= 0 && rots >= 0 )
     {
         this.nodeAction =  ((0 | face) << 4) | rots;
-   
+        RubixState.rotate(this.rubixState, face, rots);   
     }  
     
     this.parentNode = parent;
@@ -49,30 +53,30 @@ RubixNode.prototype.init = function(state, parent, face, rots)
     if (parent)
     {        
         this.depth = parent.depth + 1;
-        this.fn = this.depth + CubeHeuristics.heuristic(this.rubixState);
+        this.fn = this.depth; //+ CubeHeuristics.heuristic(this.rubixState);
 
         parent.rc ++;
     }
     else
     {
         this.depth = 0;
-        this.fn = CubeHeuristics.heuristic(this.rubixState);
+        this.fn =0;// CubeHeuristics.heuristic(this.rubixState);
         this.rc = 0;
     }
 };
     
 RubixNode.buildAndRotateNode  = function(node, parentNode, face, rots)
 {
+            //console.log("new node");
+
     if(node)
     {
-        node.init(parentNode.state,parentNode, face, rots);
+        node.init(parentNode.rubixState,parentNode, face, rots);
     }
     else
     {
-        node = new RubixNode(parentNode.state, parentNode,  face, rots);
+        node = new RubixNode(parentNode.rubixState, parentNode, face, rots,true);
     }
-    
-    RubixState.rotate(node.rubixState, face, rots);
     
     return node;
 };
@@ -106,12 +110,10 @@ RubixNode.getSuccessors = function(node)
             {
                continue;
             }
-            // Create a new node with a copy of the data then rotate the state.          
             successors.push(
                 RubixNode.buildAndRotateNode(RubixNode.nodePool.pop(), node, i, j));
         }   
     }    
-
     return successors;
 };
 

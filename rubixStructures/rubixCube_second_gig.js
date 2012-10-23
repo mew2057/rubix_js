@@ -201,7 +201,7 @@ RubixState.createWithString = function(text)
         }
     }
 
-
+/*
     for(var i =0; i < 6; i++)
     {
         for(var j = 1; j < 4; j++)
@@ -212,8 +212,9 @@ RubixState.createWithString = function(text)
         RubixState.rotate(state, i,2 - (j - 2));
         }
     }
-
-    //return RubixState.verifyState(state) ? state : null;
+*/ 
+    console.log(RubixState.toString(state));
+    return state;
 };
 
 RubixState.toString = function(state)
@@ -575,7 +576,7 @@ RubixState.isEqual = function(stateA, stateB)
     /**
      * Iterate over the cubie buffer to find any abberations.
      */
-    for(var index = 0, length = stateA.cubies.length; (index < length); index ++)
+    for(var index = 0, length = stateA.length; (index < length); index ++)
     {
         if (stateA[index] !== stateB[index])
         {
@@ -584,6 +585,11 @@ RubixState.isEqual = function(stateA, stateB)
     }
 
     return true;  
+};
+
+RubixState.copy = function(state)
+{
+    return new Uint8Array(state.buffer.slice(0));
 };
 
 // The face value map used in tanslating moves to something human readable. 

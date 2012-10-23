@@ -57,12 +57,14 @@ AStar.prototype.iterativeAStar = function(initialState)
         
         depth ++;
         this.frontier = new PriorityMinQueue();
+        
         console.log(RubixNode.nodePool.length);
+        
         
         console.log("The depth steadily increased:" + depth);
     }
     
-    console.log(this.pathFromNode(goalNode));
+    console.log(goalNode.fn,this.pathFromNode(goalNode));
     sequence =this.pathFromNode(goalNode);
     
     return sequence;
@@ -96,12 +98,13 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
             
             for (var index = 0; index< successors.length; index++)
             {            
+
                 if(successors[index].fn <= depth)
                 {
                     this.frontier.insert(successors[index].fn, successors[index]);    
                 }
                 else
-                {
+                {        
                     RubixNode.wipeBadChain(successors[index]);   
                 }
             }
@@ -110,7 +113,6 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
         {
             RubixNode.wipeBadChain(localNode);
         }
-        
         if(!this.frontier.isEmpty())
         {
             //this.record.push(localNode);
