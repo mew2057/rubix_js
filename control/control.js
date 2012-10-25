@@ -5,7 +5,7 @@
    ---------- */
 
 $(document).ready(function() {
-    RubixAnimation.init();
+    //RubixAnimation.init();
 });
 
 function RubixAnimation() {}

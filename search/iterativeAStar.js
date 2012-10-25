@@ -28,17 +28,14 @@ AStar.prototype.iterativeAStar = function(initialState)
     {
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
     }*/
-// RubixState.rotate(initialState,0,1);
-  //RubixState.rotate(initialState,4,1);
-  //  console.log(RubixState.verifyState(initialState));
+    
     console.log(RubixState.toString(initialState));
-        //return;
 
     var initialNode = new RubixNode(initialState);
     
     
     depth = initialNode.fn;
-
+    
     while(!goalNode)
     {
         //TODO get Garbage collection to run here...
@@ -59,13 +56,16 @@ AStar.prototype.iterativeAStar = function(initialState)
         depth ++;
         this.frontier = new PriorityMinQueue();
         
-        console.log(RubixNode.nodePool.length);
-        
-        
-        console.log("The depth steadily increased:" + depth);
+        if(!goalNode)
+        {    
+            $("#outputDiv").text("The depth steadily increased:" + depth);
+
+            console.log("The depth steadily increased:" + depth);
+        }
+            
     }
     
-    console.log(goalNode.fn,this.pathFromNode(goalNode));
+    console.log(this.pathFromNode(goalNode));
     sequence =this.pathFromNode(goalNode);
     
     return sequence;
@@ -90,14 +90,14 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
 {      
     var localNode = currentNode;
     var isGoal = false;
-    var successors = null;
+    var successors = null, size = 0, index = 0;
 
     do {
         if(localNode.fn < depth)
         {
             successors = RubixNode.getSuccessors(localNode);        
             
-            for (var index = 0; index< successors.length; index++)
+            for (index = 0, size = successors.length; index< successors.length; index++)
             {        
                 if(successors[index].fn <= depth)
                 {
@@ -113,6 +113,8 @@ AStar.prototype.iterativeAStarDepthLimted = function(currentNode, depth)
         {
             RubixNode.wipeBadChain(localNode);
         }
+        
+        
         if(!this.frontier.isEmpty())
         {
             //this.record.push(localNode);

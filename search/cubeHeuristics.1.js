@@ -67,7 +67,7 @@ CubeHeuristics.manhattanDistanceOfBottomEdges = function(rubixState)
 
 CubeHeuristics.manhattanDistanceOfAllEdges = function(rubixState)
 {
-    return CubeHeuristics.manhattanDistanceOfEdges(rubixState,CubeHeuristics.edges, 0,12) //CubeHeuristics.edgesBottom.concat(CubeHeuristics.edgesTop));
+    return CubeHeuristics.manhattanDistanceOfEdges(rubixState,CubeHeuristics.edges, 0,12); //CubeHeuristics.edgesBottom.concat(CubeHeuristics.edgesTop));
 };
 
 CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges,offset, size)
@@ -118,7 +118,7 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges,offset, siz
                 moves += 1;
             */
         }
-        
+
         sum += moves;
     }
     
@@ -166,6 +166,7 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
             */
         }
         
+
         sum += moves;
     }
     

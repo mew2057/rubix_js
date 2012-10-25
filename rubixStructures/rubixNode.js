@@ -74,18 +74,14 @@ RubixNode.getSuccessors = function(node)
     // Record them.
     for(var i = 0; i < 6; i++)
     {
-        if(node.nodeAction && i === node.nodeAction >> 4)
+        if(node.nodeAction && (i === node.nodeAction >> 4 || 
+            (i > 2  && RubixNode.faceCulling[(node.nodeAction >> 4)] == i)))
         {
             continue;
         }
         
         for(var j = 1; j < 4; j++)
         {
-            if(node.nodeAction && RubixNode.faceCulling[(node.nodeAction >> 4)] == i 
-               && (2 - (node.nodeAction & 7 - 2)) == j)
-            {
-               continue;
-            }
         // Create a new node with a copy of the data then rotate the state.            
             successors.push(
                 RubixNode.buildNode(RubixNode.nodePool.pop(),

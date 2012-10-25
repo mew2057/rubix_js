@@ -4,7 +4,6 @@
     A node representation of state for search trees.
    --------------*/
 
-RubixNode.nodePool = [];
 RubixNode.faceCulling = {
     "0":4,
     "1":3,
@@ -23,29 +22,10 @@ RubixNode.faceCulling = {
  * @param rots The rotations caried out in the action. (if this and face are 
  * supplied a rotation occurs)
  * 
- * @param createCopyState A flag that will toggle a deep copy the supplied state. 
  */
-function RubixNode(state, parent, face, rots,createCopyState)
+function RubixNode(state, parent, face, rots)
 {
-    this.init(state,parent,face, rots,createCopyState);    
-}
-
-RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
-{
-    // Handle the state.
-    if(createCopyState)
-    {
-       // console.log("copyState",state);
-        this.rubixState = RubixState.copy(state);
-    }
-    else if(this.rubixState)
-    {        
-        this.rubixState.set(state);
-    }
-    else
-    {
-        this.rubixState = state;    
-    }
+    this.rubixState = state;    
     
     this.nodeAction = null;
 
@@ -56,52 +36,22 @@ RubixNode.prototype.init = function(state, parent, face, rots, createCopyState)
         RubixState.rotate(this.rubixState, face, rots);   
     }  
     
-    this.parentNode = parent;
-    
+    this.parentNode = parent;    
     
     if (parent)
     {        
         this.depth = parent.depth + 1;
-        this.fn = this.depth; //+ CubeHeuristics.heuristic(this.rubixState);
+        this.fn = this.depth + CubeHeuristics.heuristic(this.rubixState);
 
         parent.rc ++;
     }
     else
     {
         this.depth = 0;
-        this.fn =0;// CubeHeuristics.heuristic(this.rubixState);
+        this.fn = CubeHeuristics.heuristic(this.rubixState);
         this.rc = 0;
-    }
-};
-
-/**
- * Builds a node from the supplied details. To be used with the nodePool as it handles
- * empty nodes when the pool is empty.
- * 
- * @param node The node that will be modified to represent a different node.
- * 
- * @param parentNode The parent node used in retrieving the path.
- * 
- * @param face The face that was rotated by an action.
- * 
- * @param rots The rotations caried out in the action. (if this and face are 
- * supplied a rotation occurs)
- * 
- * @return The modified/created node.
- */
-RubixNode.buildAndRotateNode  = function(node, parentNode, face, rots)
-{
-    if(node)
-    {
-        node.init(parentNode.rubixState,parentNode, face, rots);
-    }
-    else
-    {
-        node = new RubixNode(parentNode.rubixState, parentNode, face, rots,true);
-    }
-    
-    return node;
-};
+    }   
+}
 
 /**
  * Retrieves and generates nodes for all possible states that may follow the 
@@ -134,8 +84,8 @@ RubixNode.getSuccessors = function(node)
         
         for(var j = 1; j < 4; j++)
         {
-            successors.push(
-                RubixNode.buildAndRotateNode(RubixNode.nodePool.pop(), node, i, j));
+            successors.push(new RubixNode(RubixState.copy(node.rubixState), 
+                node, i, j));
         }   
     }    
     return successors;
@@ -160,12 +110,12 @@ RubixNode.wipeBadChain = function(node)
         }
         
         // Prep and load the node into the pool.
+        node.rubixState = null;
         node.parentNode = null;    
         node.nodeAction = null;
         node.rc = null;
         node.depth = null;
         node.fn = null;
-        RubixNode.nodePool.push(node);
     }    
 };
 

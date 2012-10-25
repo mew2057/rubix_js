@@ -4,10 +4,8 @@
    Represents the Rubik's cube as a JavaScript object.
    ---------- */
 
-
 // Defines the function that has static functions attached.
-function RubixState(){}
-
+function RubixState() {}
 
 /**
  * Creates a Rubik cube with the goal state.
@@ -28,7 +26,7 @@ RubixState.createWithGoalState = function()
 RubixState.createWithString = function(text)
 {
     
-    if(text.length !=  54) 
+    if (text.length != 54) 
     {
         console.log("Your rubik's cube doesn't contain the right number of cubie" +
             " faces!");
@@ -42,7 +40,7 @@ RubixState.createWithString = function(text)
     error += (text.match(/O/g)||[]).length !== 9 ? "Incorrect number of Os\n" : "";
     error += (text.match(/W/g)||[]).length !== 9 ? "Incorrect number of Ws\n" : "";
     
-    if(error !== "")
+    if (error !== "")
     {
         console.log(error);
         return null;
@@ -52,12 +50,12 @@ RubixState.createWithString = function(text)
     var faces = [];
     
     // Iterate over the input string to organize our data.
-    for(var index = 0, line= " ", length = text.length / 9; index <length; index++)
+    for (var index = 0, line= " ", length = text.length / 9; index <length; index++)
     {
         line = text.substring(index*9,index*9 + 9);
         
         // Switch on indices in a manner befitting of a boss.
-        switch(index)
+        switch (index)
         {
             case 1:
                 faces.push(line.substring(0,3));
@@ -77,15 +75,15 @@ RubixState.createWithString = function(text)
     }
     
     // Splits the strings into character arrays.
-    for(var face in faces)
+    for (var face in faces)
     {
         faces[face] = faces[face].split('');
     }
     
     // Check the center cubies before advancing.
-    for(index = 0; index < faces.length; index ++)
+    for (index = 0; index < faces.length; index ++)
     {
-        if(RubixState.faceValues[index] !== faces[index][4])
+        if (RubixState.faceValues[index] !== faces[index][4])
         {
             console.log("Your " + RubixState.faceValues[index] + " face center cubie" +
                  " is wrong!");
@@ -125,7 +123,7 @@ RubixState.createWithString = function(text)
     // Creates an array view to an array buffer.
     var state = new Uint8Array(new ArrayBuffer(20));
 
-    try{
+    try {
         RubixState.faceSet = [0,0,0,0,0,0];
         RubixState.edgeWindowSum = 0;
         
@@ -142,7 +140,7 @@ RubixState.createWithString = function(text)
         state[7]  = RubixState.processCubie([[faces[5][2],5],[faces[4][8],4],[faces[3][8],3]]);
 
         // Check the corners for validity before wasting cycles on the sides.
-        if(((RubixState.faceSet[0]+RubixState.faceSet[4]) % 3) + 
+        if (((RubixState.faceSet[0]+RubixState.faceSet[4]) % 3) + 
             ((RubixState.faceSet[1] + RubixState.faceSet[3]) % 3) + 
             ((RubixState.faceSet[2] + RubixState.faceSet[5]) % 3) !== 0)
         {
@@ -167,20 +165,21 @@ RubixState.createWithString = function(text)
         state[19] = RubixState.processCubie([[faces[5][1],5],[faces[4][7],4]],19);
         
         // Do the edge parity check.
-        if(RubixState.edgeWindowSum % 2 === 1)
+        if (RubixState.edgeWindowSum % 2 === 1)
         {
             RubixState.edgeWindowSum =0;
             throw "RotEdge";
         }
         RubixState.edgeWindowSum =0;
-    }catch(error)
+    } 
+    catch (error)
     {
 
-        if(error ==="CError")
+        if (error ==="CError")
         {
             console.log("One of your corners has an invalid configuration of colors.");
         }
-        else if(error === "EError")
+        else if (error === "EError")
         {
             console.log("One of your edges has an invalid configuration of colors.");
         }
@@ -208,22 +207,7 @@ RubixState.createWithString = function(text)
         {
             console.log(error);   
         }
-    }
-
-    /*
-    for(var i =0; i < 6; i++)
-    {
-        for(var j = 1; j < 4; j++)
-        {
-            
-        RubixState.rotate(state, i, j);
-        console.log(i,j,RubixState.toString(state));
-        RubixState.rotate(state, i,2 - (j - 2));
-        }
-    }
-    console.log(RubixState.toString(state));
-    */
-    
+    }    
     return state;
 };
 
@@ -248,12 +232,12 @@ RubixState.toString = function(state)
     RubixState.outputFaces[49] = 'W';      
     
     // Load the cubies into the array.
-    for(var index=0; index < state.length; index++) 
+    for (var index=0,size = state.length; index < size; index++) 
     {
         // Get the location that the index coresponds to.
         tempIndex = RubixState.cubieOutputMapping[index].faces.indexOf(state[index] & 7);
         
-        if(tempIndex == -1)
+        if (tempIndex == -1)
         {
             return "Bad State";
         }
@@ -263,7 +247,7 @@ RubixState.toString = function(state)
         limit = index < 8 ? 3 : 2;
         
         // For the number of faces use a lookaside mapping to place the correct color values in the array.
-        for(tempIndex, offset = 0; offset < limit; tempIndex++,offset++)
+        for (tempIndex, offset = 0; offset < limit; tempIndex++,offset++)
         {        
             tempIndex = tempIndex % limit;
             RubixState.outputFaces[
@@ -273,17 +257,17 @@ RubixState.toString = function(state)
     }
     
     // Simply creates the String.
-    for(index = 0; index < RubixState.outputFaces.length; index++)
+    for (index = 0, size = RubixState.outputFaces.length ; index < size; index++)
     {
         toReturn +=RubixState.outputFaces[index];
         
-        if(index === 2 || index === 5 ||  index === 35|| 
+        if (index === 2 || index === 5 ||  index === 35|| 
             index === 38 || index === 41 || index === 44 ||
             index === 47 || index === 50 || index === 53)
         {
             toReturn +="\n   ";    
         }
-        else if(index === 8 ||
+        else if (index === 8 ||
             index === 17 || index === 26   )
         {
             toReturn +='\n';   
@@ -308,13 +292,13 @@ RubixState.processCubie = function (faces, cubie)
     var cubieSum = 0;
     
     // Calculate the sum of the faces to aid in determining which cubie this is.
-    for(var index in faces)
+    for (var index in faces)
     {
         cubieSum += RubixState.faceMap[faces[index][0]].value;        
     }
     
     // Run the specialized routine for either corner or edge.
-    return (faces.length === 3 ? RubixState.processCorner:RubixState.processEdge)(faces, cubieSum, cubie);
+    return (faces.length === 3 ? RubixState.processCorner : RubixState.processEdge)(faces, cubieSum, cubie);
 };
 
 /**
@@ -337,7 +321,7 @@ RubixState.processCorner = function(faces, cubieSum)
     var composition = 0, testString ='';
     
     // Find the leading face or determine that there are too many faces.
-    for(var index = 0; index <= faces.length;  index++)
+    for(var index = 0, size = faces.length; index <= size;  index++)
     {
         if(index === faces.length)
         {
@@ -422,7 +406,7 @@ RubixState.processEdge = function(faces,cubieSum, cubie)
 {
     var testString = '',composition = 0;
     
-    for(var index = 0; index < faces.length;  index++)
+    for(var index = 0, size = faces.length; index < size;  index++)
     {
         if(faces[index][0] === 'R' || faces[index][0] === 'O')
         {
@@ -542,7 +526,7 @@ RubixState.processEdge = function(faces,cubieSum, cubie)
  */
 RubixState.faceIndex = function(faces, faceChar)
 {
-    for(var index = 0; index < faces.length;  index++)
+    for(var index = 0, size = faces.length; index < size;  index++)
     {
         if(faces[index][0] == faceChar)
         {
@@ -641,10 +625,10 @@ RubixState.rotate =function(state, face, rotations)
      * cFace - A cubieFace.
      * offset - A generic offset variable.
     */
-    var cubie, size, newIndex;
+    var cubie, size = indicies.length, newIndex;
     
     // Iterate over the indicies and calculate values of the rotated cubies.
-    for(var index  = 0, scratchIndex =0; index < indicies.length; index ++)
+    for(var index  = 0, scratchIndex =0; index < size; index ++)
     {
         // Keep track of the cubie location. If it is a side (loc >= 24) size is 2 else 3
         cubie = indicies[index];
@@ -653,7 +637,7 @@ RubixState.rotate =function(state, face, rotations)
                 state[cubie], face, rotations);   
     }
 
-    for (index = 0, size = indicies.length; index < size; index++)
+    for (index = 0; index < size; index++)
     {
         // Calculate the index of the new cubie index after rotation.
         newIndex = indicies[((index + (2 * rotations))) % 8];
@@ -745,7 +729,7 @@ RubixState.hashCorners = function(state)
     
     for(var index = 1; index < 8; index++)
     {
-        // f1(n) = sum(n! * state[n].value) from n=1 to n=7
+        // f1(n) = sum(n! * state[n].value) from n=1 to n=7 (n=0 is always 0)
         fact *= (index + 1);
         hashPos += (state[index] >> 3) * fact;
         
@@ -754,8 +738,10 @@ RubixState.hashCorners = function(state)
         expo *= 3;
     }
     
-    // f(n) = 12*f1(n) + f2(n)
-    return hashPos*12 + hashOrient;
+    // f(n) = 2187*f1(n) + f2(n)
+    //return hashPos*2187 + hashOrient;
+    
+    return hashPos * 2187 + hashOrient;
 };
 
 // The face value map used in tanslating moves to something human readable. 
@@ -790,18 +776,18 @@ RubixState.edgeWindowSum = 0;
 
 // The position of a cubie in the state and the face that corresponds to the edge window for it.
 RubixState.edgeWindows ={
-  8:0,
-  9:1,
-  10:3,
-  11:0,
-  12:5,
-  13:2,
-  14:2,
-  15:5,
-  16:1,
-  17:4,
-  18:3,
-  19:4  
+  8  : 0,
+  9  : 1,
+  10 : 3,
+  11 : 0,
+  12 : 5,
+  13 : 2,
+  14 : 2,
+  15 : 5,
+  16 : 1,
+  17 : 4,
+  18 : 3,
+  19 : 4  
 };
 
 // An array used in data output for a state.
