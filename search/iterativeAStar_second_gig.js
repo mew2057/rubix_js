@@ -229,22 +229,6 @@ AStar.prototype.iterativeAStarDepthLimted = function(node, costLimit)
 };
 
 /**
- * @brief Performs the IDA* search using a do while loop and Priority min queue. 
- * 
- * Each iteration of the search checks to see if the current node f(n) is less than
- * the limit imposed by the depth. If this evaluates to true new nodes may be spawned.
- * The spawned nodes are then added to a min priority queue if their f(n) does not exceed the
- * depth. The frontier is then checked if it is empty and if not a new node is 
- * pulled from the priority queue. The loop is exited if the priority queue is empty
- * or a goal state is found.
- * 
- * @param currentNode The initial node containing the state to find a solution for.
- * @param depth The noninclusive maximum f(n) of a node that may be expanded.
- * 
- * @return The goal node if found or null.
- */
-
-/**
  * Recursively generates a path from the goal node.
  * 
  * @param node The goal node the path is reuired from.
