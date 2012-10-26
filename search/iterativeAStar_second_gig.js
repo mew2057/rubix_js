@@ -30,9 +30,10 @@ function AStar()
     // The starting node of the search (essential for search restarts).
     this.startNode = null;
     
-    // Initialized high here, but will actually be initialized to baseCost + 1 in
-    // implementation.
+    // Initialized high here
     this.nextCost = 100000;
+    this.nextSet = false;
+    
 }
 
 /**
@@ -53,7 +54,12 @@ AStar.prototype.iterativeAStar = function(initialState,htmlElement)
             alert("Poorly formatted cube, please check console.");
             return;
         }
-        
+        /*
+        for (var i = 0; i < 9; i ++)
+        {
+            RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
+        }
+        */
         console.log(RubixState.toString(initialState));
         
         // Prevent too many searches from running at one time.
@@ -69,7 +75,7 @@ AStar.prototype.iterativeAStar = function(initialState,htmlElement)
         var goalNode = RubixState.isEqual(initialState,AStar.goalState) ? initialState: null;
         this.startNode = new RubixNode(initialState);              
         var baseCost = this.startNode.fn;       
-        this.nextCost = baseCost + 1;
+        //this.nextCost = baseCost + 1;
 
         $(this.htmlElement).text("Processing: " + baseCost);
         console.log("Processing:" + baseCost);
@@ -111,8 +117,9 @@ AStar.prototype.iterativeAStarCallback = function(node, costLimit)
         $(this.htmlElement).text("Now Processing Upper Cost of   " + costLimit);
         console.log("Now Processing Upper Cost of  " + costLimit);
           
-        // Increment the next cost so it may only increase.
-        this.nextCost++;
+        // Prime the nextCost
+        this.nextCost = 100000;
+        this.nextSet = false;
         
         // Sets a timeout to the search so Garbage Collection can hopefully run and 
         // Memory doesn't get slammed too hard.
@@ -137,8 +144,15 @@ AStar.prototype.iterativeAStarDepthLimted = function(node, costLimit)
     var tempNode = null;
     
     // The callback functions for the search, declared here in an effort to clena up the implementation.
-    var endSearch = function(){AStar.self.iterativeAStarCallback(localNode, AStar.self.nextCost); }; 
-    var continueSearch = function() {AStar.self.iterativeAStarDepthLimted(AStar.self.frontier.remove(), costLimit);};    
+    var endSearch = function(){
+        AStar.self.iterativeAStarCallback(localNode, 
+            AStar.self.nextSet ? AStar.self.nextCost : costLimit + 1); 
+    }; 
+    
+    var continueSearch = function() {
+        AStar.self.iterativeAStarDepthLimted(AStar.self.frontier.remove(), 
+            costLimit);
+    };    
     
     // Loop n times and perform search operations.
     for(var index = 0; index < AStar.loopsBeforeCallback; index ++)
@@ -187,8 +201,12 @@ AStar.prototype.iterativeAStarDepthLimted = function(node, costLimit)
                     {
                         // The next cost for cutoff should be a min value based on 
                         // Korf's algorithm (honestly this will basically be incrementing by 1...)
-                        this.nextCost = tempNode.fn > this.nextCost ?
-                            Math.min(tempNode.fn, this.nextCost) : this.nextCost;
+                        if( tempNode.fn > costLimit)
+                        {
+                            this.nextCost = Math.min(tempNode.fn, this.nextCost);
+                            
+                            this.nextSet = true;    
+                        }
                             
                         RubixNode.wipeBadChain(tempNode);
                     }                    
