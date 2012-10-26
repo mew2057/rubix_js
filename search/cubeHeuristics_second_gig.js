@@ -4,6 +4,11 @@
 
 function CubeHeuristics() {}
 
+/**
+ * Gives a heuristic for the supplied state.
+ * @param rubixState the state to find a heuristic for.
+ * @return The heuristic.
+ */
 CubeHeuristics.heuristic = function(rubixState)
 {
     var heuristic = Math.max(Tables.cornersHeuristic(rubixState),
@@ -13,16 +18,17 @@ CubeHeuristics.heuristic = function(rubixState)
     if (heuristic !== 0)
         return heuristic;
     
-    return Math.max(CubeHeuristics.manhattanDistanceOfAllEdges(rubixState), 
-                    CubeHeuristics.manhattanDistanceOfCorners(rubixState));
+    // Korf rounds in his implementation.
+    return Math.round(Math.max(CubeHeuristics.manhattanDistanceOfEdges(rubixState), 
+                    CubeHeuristics.manhattanDistanceOfCorners(rubixState)));
 };
 
-CubeHeuristics.manhattanDistanceOfAllEdges = function(rubixState)
-{
-    return CubeHeuristics.manhattanDistanceOfEdges(rubixState,CubeHeuristics.edges);
-};
 
-CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
+/**
+ * The function name is verbose for a reason.
+ * @param rubixState The state to find the distance for.
+ */
+CubeHeuristics.manhattanDistanceOfEdges = function(rubixState)
 {
     var sum = 0, moves = 0, cubie;
 
@@ -30,6 +36,12 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
     {            
         cubie = rubixState[index] >> 3;
         
+        /*
+         *If the cubie is in the right place it is either zero or 3 moves from 
+            being properly oriented.
+         * Else if it's a far side it is 2 moves away.
+         * else assume one move.
+         */ 
         if (cubie === index)
         {            
             if (RubixState.cubieOutputMapping[index].faces[0] !== (rubixState[index] & 7))
@@ -56,6 +68,10 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
     return sum / 4;
 };
 
+/**
+ * The function name is verbose for a reason.
+ * @param rubixState The state to find the distance for.
+ */
 CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
 {
     var sum = 0, moves = 0, cubie;
@@ -64,6 +80,12 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
     {                    
         cubie = rubixState[index] >> 3;
         
+        /*
+         *If the cubie is in the right place it is either zero or 3 moves from 
+            being properly oriented.
+         * Else if it's a far corner it is 2 moves away.
+         * else assume one move.
+         */ 
         if (cubie == index)
         {            
             if (RubixState.cubieOutputMapping[index].faces[0] !== (rubixState[index] & 7))
@@ -85,10 +107,7 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
             moves = 1;    
         }        
         sum += moves;
-
     }
-    
-    // TODO - orientation - See above
     
     return sum / 4;
 };

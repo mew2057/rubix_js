@@ -29,6 +29,10 @@ function AStar()
     
     // The starting node of the search (essential for search restarts).
     this.startNode = null;
+    
+    // Initialized high here, but will actually be initialized to baseCost + 1 in
+    // implementation.
+    this.nextCost = 100000;
 }
 
 /**
@@ -64,10 +68,21 @@ AStar.prototype.iterativeAStar = function(initialState,htmlElement)
         // Initialize the nodes and depth.
         var goalNode = RubixState.isEqual(initialState,AStar.goalState) ? initialState: null;
         this.startNode = new RubixNode(initialState);              
-        var depth = this.startNode.fn;       
-        
-        // Start the search proper.
-        this.iterativeAStarCallback(goalNode, depth);
+        var baseCost = this.startNode.fn;       
+        this.nextCost = baseCost + 1;
+
+        $(this.htmlElement).text("Processing: " + baseCost);
+        console.log("Processing:" + baseCost);
+
+        // Start the search proper.       
+        if(goalNode)
+        {
+            this.iterativeAStarCallback(goalNode, baseCost);
+        }
+        else
+        {  
+            this.iterativeAStarDepthLimted(this.startNode,baseCost);
+        }
     }
     else{
         alert("A search is already executing!");   
@@ -80,26 +95,30 @@ AStar.prototype.iterativeAStar = function(initialState,htmlElement)
  * the search continues and the depth is incremented.
  * 
  * @param node The hopeful goalNode, if null continue search, else we have a solution.
- * @param depth the current depth for the search.
+ * @param costLimit the current depth for the search.
  */
-AStar.prototype.iterativeAStarCallback = function(node, depth)
+AStar.prototype.iterativeAStarCallback = function(node, costLimit)
 {
     if(node)
     {
-        $(this.htmlElement).text("Solution is: " + this.pathFromNode(node));
+        $(this.htmlElement).text("The solution is: " + this.pathFromNode(node));
+        console.log("The solution is: " + this.pathFromNode(node));
         AStar.blockAdditionalSearches = false;
         AStar.self = null;        
     }
     else
     {
-        $(this.htmlElement).text("Finished processing: " + depth + "  Now Processing: " + (depth + 1));
-        console.log("Finished processing: " + depth + "  Now Processing: " + (depth + 1));
-         
+        $(this.htmlElement).text("Now Processing Upper Cost of   " + costLimit);
+        console.log("Now Processing Upper Cost of  " + costLimit);
+          
+        // Increment the next cost so it may only increase.
+        this.nextCost++;
+        
         // Sets a timeout to the search so Garbage Collection can hopefully run and 
         // Memory doesn't get slammed too hard.
         setTimeout(function() {            
-            AStar.self.iterativeAStarDepthLimted(AStar.self.startNode,depth + 1);
-        }, 100 * depth*depth); 
+            AStar.self.iterativeAStarDepthLimted(AStar.self.startNode,costLimit);
+        }, 100 * costLimit); 
     }
 };
 
@@ -109,17 +128,17 @@ AStar.prototype.iterativeAStarCallback = function(node, depth)
  * encourage (not guarantee) garbage collection.
  * 
  * @param node The current leading node in the search.
- * @param depth The current depth for the search.
+ * @param costLimit The current depth for the search.
  */
-AStar.prototype.iterativeAStarDepthLimted = function(node, depth)
+AStar.prototype.iterativeAStarDepthLimted = function(node, costLimit)
 {    
     // Placeholder node variables.
     var localNode = node;
     var tempNode = null;
     
     // The callback functions for the search, declared here in an effort to clena up the implementation.
-    var endSearch = function(){AStar.self.iterativeAStarCallback(localNode, depth); }; 
-    var continueSearch = function() {AStar.self.iterativeAStarDepthLimted(AStar.self.frontier.remove(), depth);};    
+    var endSearch = function(){AStar.self.iterativeAStarCallback(localNode, AStar.self.nextCost); }; 
+    var continueSearch = function() {AStar.self.iterativeAStarDepthLimted(AStar.self.frontier.remove(), costLimit);};    
     
     // Loop n times and perform search operations.
     for(var index = 0; index < AStar.loopsBeforeCallback; index ++)
@@ -135,7 +154,7 @@ AStar.prototype.iterativeAStarDepthLimted = function(node, depth)
             endSearch(); 
             return;
         }    
-        else if(localNode.fn < depth)
+        else if(localNode.fn < costLimit)
         {
             // Increments the local reference counter by one (done to prevent the node from
             // being deleted until after its successors are declared)
@@ -160,12 +179,17 @@ AStar.prototype.iterativeAStarDepthLimted = function(node, depth)
                     tempNode = new RubixNode(RubixState.copy(localNode.rubixState), 
                         localNode, i, j);
                         
-                    if(tempNode.fn <=depth)
+                    if(tempNode.fn <= costLimit)
                     {
                         this.frontier.insert(tempNode.fn, tempNode);
                     }
                     else
                     {
+                        // The next cost for cutoff should be a min value based on 
+                        // Korf's algorithm (honestly this will basically be incrementing by 1...)
+                        this.nextCost = tempNode.fn > this.nextCost ?
+                            Math.min(tempNode.fn, this.nextCost) : this.nextCost;
+                            
                         RubixNode.wipeBadChain(tempNode);
                     }                    
                 }   
