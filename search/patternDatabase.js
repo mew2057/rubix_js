@@ -50,7 +50,7 @@ PatternDatabase.prototype.toString = function()
 {
     var index, strDb = "";
     
-    for (index = 0; index < this.entries.length * 4; index += 2)
+    for (index = 0; index < this.entries.length * 8; index += 2)
         strDb += String.fromCharCode(this.get(index) | (this.get(index + 1) << 4));
         
     return strDb;
@@ -62,11 +62,12 @@ PatternDatabase.prototype.toString = function()
  */
 PatternDatabase.prototype.loadFromString = function(strDb)
 {
-    var index, char;
+    var index, charIndex = 0, char;
     
-    for (index = 0; index < this.entries.length * 4; index += 2)
+    for (index = 0; index < this.entries.length * 8; index += 2)
     {
-        char = strDb.charCodeAt(index);
+        char = strDb.charCodeAt(charIndex++);
+    	
         this.set(index, (char & 240) >>> 4);    // ----0000
         this.set(index + 1, char & 15);         // 0000----
     }

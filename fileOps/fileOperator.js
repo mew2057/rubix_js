@@ -77,7 +77,7 @@ FileOperator.prototype.processFileText = function(input)
     
     var state = RubixState.createWithString(this.text);
     
-    (new AStar()).iterativeAStar(state);
+    (new AStar()).iterativeAStar(state,"#outputDiv");
 };
 
 /**

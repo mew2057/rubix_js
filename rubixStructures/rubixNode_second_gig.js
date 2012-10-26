@@ -3,7 +3,7 @@
     Requires - rubixState.js
     A node representation of state for search trees.
    --------------*/
-
+// A mapping to handle face culling in the successor generation.
 RubixNode.faceCulling = {
     "0" : 4,
     "1" : 3,
@@ -57,45 +57,6 @@ function RubixNode(state, parent, face, rots)
  * invoking node's state.
  * 
  * @param node The node to retrieve successors for.
- * 
- * @return The array of successors for the rubix cube, if a solution is found 
- *         within the array return the solution alone in an array.
- */
-RubixNode.getSuccessors = function(node)
-{
-    var successors = [];
-    
-    // For each face iterate over the three possible movements for the cube and 
-    // Record them.
-    for (var i = 0; i < 6; i++)
-    {
-        /* 
-         * Do the face culling. Prevent redundant face rotations with the first condition.
-         * The second condition prevents duplicate states from arising due to rotating
-         * opposing faces.
-         */
-        if (node.nodeAction && (i === node.nodeAction >> 4 ||
-            (i > 2  && RubixNode.faceCulling[(node.nodeAction >> 4)] == i)))
-        {
-            continue;
-        }
-        
-        for (var j = 1; j < 4; j++)
-        {
-            successors.push(new RubixNode(RubixState.copy(node.rubixState), 
-                node, i, j));
-        }   
-    }    
-    
-    node = null;
-    return successors;
-};
-
-/**
- * Retrieves and generates nodes for all possible states that may follow the 
- * invoking node's state.
- * 
- * @param node The node to retrieve successors for.
  * @param successors The Array the successors are to be placed in.
  * @return The array of successors for the rubix cube, if a solution is found 
  *         within the array return the solution alone in an array.
@@ -131,7 +92,7 @@ RubixNode.getSuccessors = function(node, successors)
 };
 
 /**
- * Wipes out a useless node from the tree and adds it to the node pool for reuse.
+ * Wipes out a useless node from the tree.
  * If the parent node has no more children after this removal cascade up.
  * 
  * @param node The node to remove.
@@ -149,7 +110,6 @@ RubixNode.wipeBadChain = function(node)
             RubixNode.wipeBadChain(node.parentNode);    
         }
         
-        // Prep and load the node into the pool.
         node.rubixState = null;
         node.parentNode = null;    
         node.nodeAction = null;

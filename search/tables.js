@@ -97,14 +97,14 @@ Tables.edgesBottomHeuristic = function(rubixState)
 function TableGenerator() {}
 
 // Table to generate: 0 corners, 1 edges top, 2 edges bottom
-TableGenerator.tableToGenerate = 2;
+TableGenerator.tableToGenerate = 0;
 
 // Search type: 0 combined, 1 breadth-first only, 2 depth-limited only
 TableGenerator.searchType = 0;
 
 // The maximum depths to go to with each search algorithm
 TableGenerator.breadthDepth = 4;
-TableGenerator.dlsDepth = 6;
+TableGenerator.dlsDepth = 5;
 
 /**
  * Generates the heuristic tables.
