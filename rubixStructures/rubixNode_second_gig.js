@@ -5,9 +5,9 @@
    --------------*/
 
 RubixNode.faceCulling = {
-    "0":4,
-    "1":3,
-    "2":5
+    "0" : 4,
+    "1" : 3,
+    "2" : 5
 };
 
 /**
@@ -25,12 +25,13 @@ RubixNode.faceCulling = {
  */
 function RubixNode(state, parent, face, rots)
 {
-    this.rubixState = state;    
-    
+    this.rubixState = state;        
     this.nodeAction = null;
+    this.rc = 0;
+
 
     // Rotate if an action is supplied.
-    if(face >= 0 && rots >= 0 )
+    if (face >= 0 && rots >= 0 )
     {
         this.nodeAction =  ((0 | face) << 4) | rots;
         RubixState.rotate(this.rubixState, face, rots);   
@@ -42,14 +43,12 @@ function RubixNode(state, parent, face, rots)
     {        
         this.depth = parent.depth + 1;
         this.fn = this.depth + CubeHeuristics.heuristic(this.rubixState);
-
-        parent.rc ++;
+        parent.rc++;
     }
     else
     {
-        this.depth = 0;
         this.fn = CubeHeuristics.heuristic(this.rubixState);
-        this.rc = 0;
+        this.depth = 0;
     }   
 }
 
@@ -64,31 +63,71 @@ function RubixNode(state, parent, face, rots)
  */
 RubixNode.getSuccessors = function(node)
 {
-    //Initialize placeholders
     var successors = [];
     
     // For each face iterate over the three possible movements for the cube and 
     // Record them.
-    for(var i = 0; i < 6; i++)
+    for (var i = 0; i < 6; i++)
     {
         /* 
          * Do the face culling. Prevent redundant face rotations with the first condition.
          * The second condition prevents duplicate states from arising due to rotating
          * opposing faces.
          */
-        if(node.nodeAction && (i === node.nodeAction >> 4 ||
+        if (node.nodeAction && (i === node.nodeAction >> 4 ||
             (i > 2  && RubixNode.faceCulling[(node.nodeAction >> 4)] == i)))
         {
             continue;
         }
         
-        for(var j = 1; j < 4; j++)
+        for (var j = 1; j < 4; j++)
         {
             successors.push(new RubixNode(RubixState.copy(node.rubixState), 
                 node, i, j));
         }   
     }    
+    
+    node = null;
     return successors;
+};
+
+/**
+ * Retrieves and generates nodes for all possible states that may follow the 
+ * invoking node's state.
+ * 
+ * @param node The node to retrieve successors for.
+ * @param successors The Array the successors are to be placed in.
+ * @return The array of successors for the rubix cube, if a solution is found 
+ *         within the array return the solution alone in an array.
+ */
+RubixNode.getSuccessors = function(node, successors)
+{
+    successors.length = 0;
+    
+    
+    // For each face iterate over the three possible movements for the cube and 
+    // Record them.
+    for (var i = 0; i < 6; i++)
+    {
+        /* 
+         * Do the face culling. Prevent redundant face rotations with the first condition.
+         * The second condition prevents duplicate states from arising due to rotating
+         * opposing faces.
+         */
+        if (node.nodeAction && (i === node.nodeAction >> 4 ||
+            (i > 2  && RubixNode.faceCulling[(node.nodeAction >> 4)] == i)))
+        {
+            continue;
+        }
+        
+        for (var j = 1; j < 4; j++)
+        {
+            successors.push(new RubixNode(RubixState.copy(node.rubixState), 
+                node, i, j));
+        }   
+    }    
+    
+    node = null;
 };
 
 /**
@@ -100,11 +139,12 @@ RubixNode.getSuccessors = function(node)
 RubixNode.wipeBadChain = function(node)
 {
     // If not the root of the search.
-    if(node.parentNode)
+    if (node.parentNode)
     {  
         // Decrement the parent and check to see if it needs a wipe.
-        node.parentNode.rc--;
-        if(node.parentNode.rc === 0 && node.parentNode.depth !== 0)
+        node.parentNode.rc--;            
+
+        if (node.parentNode.rc === 0 && node.parentNode.depth !== 0)
         {
             RubixNode.wipeBadChain(node.parentNode);    
         }
@@ -128,5 +168,5 @@ RubixNode.wipeBadChain = function(node)
  */
 RubixNode.nodeActionToString = function(node)
 {
-  return RubixState.faceValues[node.nodeAction >> 4] + ":" + (node.nodeAction & 7);  
+    return RubixState.faceValues[node.nodeAction >> 4] + ":" + (node.nodeAction & 7);  
 };

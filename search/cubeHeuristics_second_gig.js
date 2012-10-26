@@ -6,8 +6,15 @@ function CubeHeuristics() {}
 
 CubeHeuristics.heuristic = function(rubixState)
 {
+    var heuristic = Math.max(Tables.cornersHeuristic(rubixState),
+                             Tables.edgesTopHeuristic(rubixState),
+                             Tables.edgesBottomHeuristic(rubixState));
+    
+    if (heuristic !== 0)
+        return heuristic;
+    
     return Math.max(CubeHeuristics.manhattanDistanceOfAllEdges(rubixState), 
-    CubeHeuristics.manhattanDistanceOfCorners(rubixState));
+                    CubeHeuristics.manhattanDistanceOfCorners(rubixState));
 };
 
 CubeHeuristics.manhattanDistanceOfAllEdges = function(rubixState)
@@ -23,9 +30,9 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
     {            
         cubie = rubixState[index] >> 3;
         
-        if(cubie === index)
+        if (cubie === index)
         {            
-            if(RubixState.cubieOutputMapping[index].faces[0] !== (rubixState[index] & 7))
+            if (RubixState.cubieOutputMapping[index].faces[0] !== (rubixState[index] & 7))
             {
                 moves = 3;
             }
@@ -34,7 +41,7 @@ CubeHeuristics.manhattanDistanceOfEdges = function(rubixState, edges)
                 moves = 0;
             }            
         }
-        else if( CubeHeuristics.farSides[cubie].indexOf(index) !== -1)
+        else if (CubeHeuristics.farSides[cubie].indexOf(index) !== -1)
         {
             moves = 2;
         }
@@ -57,7 +64,7 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
     {                    
         cubie = rubixState[index] >> 3;
         
-        if(cubie == index)
+        if (cubie == index)
         {            
             if (RubixState.cubieOutputMapping[index].faces[0] !== (rubixState[index] & 7))
             {
@@ -69,7 +76,7 @@ CubeHeuristics.manhattanDistanceOfCorners = function(rubixState)
                 moves = 0;    
             }
         }
-        else if(CubeHeuristics.farCorners[index] == cubie)
+        else if (CubeHeuristics.farCorners[index] === cubie)
         {
             moves = 2;
         }

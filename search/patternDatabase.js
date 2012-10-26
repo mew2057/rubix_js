@@ -81,7 +81,6 @@ PatternDatabase.prototype.loadFromFile = function(filePath)
         url : filePath,
         contentType : "text/plain; charset=UTF-8",
         async : false,
-        //dataType : "text",
         success : function(data) {
             db.loadFromString(data);
         }

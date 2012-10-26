@@ -444,7 +444,7 @@ RubixState.processEdge = function(faces,cubieSum, cubie)
                 testString = 'BW';
                 composition = (RubixState.cubies.BW.value*8)+faces[index][1];
                 break;
-			
+    		
 			default:   
                 break;
         }
@@ -615,9 +615,7 @@ RubixState.cubieIsValid = function(faces, faceComp, cubie)
  * @return The revised state.
  */
 RubixState.rotate =function(state, face, rotations)
-{
-    var indicies = RubixState.sideLookUpTable[face];
-    
+{    
      /*
      * cubie - holds the cubie index.
      * size - A generic size variable.
@@ -625,13 +623,13 @@ RubixState.rotate =function(state, face, rotations)
      * cFace - A cubieFace.
      * offset - A generic offset variable.
     */
-    var cubie, size = indicies.length, newIndex;
+    var cubie, size = RubixState.sideLookUpTable[face].length, newIndex;
     
     // Iterate over the indicies and calculate values of the rotated cubies.
     for(var index  = 0, scratchIndex =0; index < size; index ++)
     {
         // Keep track of the cubie location. If it is a side (loc >= 24) size is 2 else 3
-        cubie = indicies[index];
+        cubie = RubixState.sideLookUpTable[face][index];
 
         RubixState.scratchBuffer[scratchIndex++] = RubixState.rotateFace(
                 state[cubie], face, rotations);   
@@ -640,7 +638,7 @@ RubixState.rotate =function(state, face, rotations)
     for (index = 0; index < size; index++)
     {
         // Calculate the index of the new cubie index after rotation.
-        newIndex = indicies[((index + (2 * rotations))) % 8];
+        newIndex = RubixState.sideLookUpTable[face][((index + (2 * rotations))) % 8];
         
         state[newIndex] = RubixState.scratchBuffer[index];      
     }
@@ -733,15 +731,77 @@ RubixState.hashCorners = function(state)
         fact *= (index + 1);
         hashPos += (state[index] >> 3) * fact;
         
-        // f2(n) = sum(3^n * state[n].face) from n=0 to n = 6
+        // f2(n) = sum(3^n * state[n].face) from n=0 to n=6
         hashOrient += (state[index] & 7) + expo;
         expo *= 3;
     }
     
     // f(n) = 2187*f1(n) + f2(n)
-    //return hashPos*2187 + hashOrient;
-    
     return hashPos * 2187 + hashOrient;
+};
+
+/**
+ * Hashes the top 6 edges of a supplied state for table lookup.
+ * 
+ * @param state The state to get a hash for.
+ * 
+ * @return A number with the hashed value.
+ */
+RubixState.hashTopEdges = function(state)
+{
+    /*
+     *hashPos: aggregates the hash position total (f1())
+     *hashOrient: aggregates the hash orientation total (f2())
+     *fact: A factorial used in the position portion of the hash.
+     *expo: The exponential value used in calculating the orientation portion of the hash.    
+    */
+    var hashPos = 0, hashOrient = 0, fact = 120, expo = 1; 
+    
+    for(var index = 8; index < 14; index++)
+    {
+        // f1(n) = sum(n! * state[i].value) from n=6 to n=11
+        fact *= (index - 2);
+        hashPos += (state[index] >> 3) * fact;
+        
+        // f2(n) = sum(3^n * state[i].face) from n=0 to n=5
+        hashOrient += (state[index] & 7) + expo;
+        expo *= 2;
+    }
+    
+    // f(n) = 64*f1(n) + f2(n)
+    return hashPos / 720 * 64 + hashOrient;
+};
+
+/**
+ * Hashes the bottom 6 edges of a supplied state for table lookup.
+ * 
+ * @param state The state to get a hash for.
+ * 
+ * @return A number with the hashed value.
+ */
+RubixState.hashBottomEdges = function(state)
+{
+    /*
+     *hashPos: aggregates the hash position total (f1())
+     *hashOrient: aggregates the hash orientation total (f2())
+     *fact: A factorial used in the position portion of the hash.
+     *expo: The exponential value used in calculating the orientation portion of the hash.    
+    */
+    var hashPos = 0, hashOrient = 0, fact = 120, expo = 1; 
+    
+    for(var index = 14; index < 20; index++)
+    {
+        // f1(n) = sum(n! * state[i].value) from n=6 to n=11
+        fact *= (index - 8);
+        hashPos += (state[index] >> 3) * fact;
+        
+        // f2(n) = sum(3^n * state[i].face) from n=0 to n=5
+        hashOrient += (state[index] & 7) + expo;
+        expo *= 2;
+    }
+    
+    // f(n) = f1(n)/6! * 64 + f2(n)
+    return hashPos / 720 * 64 + hashOrient;
 };
 
 // The face value map used in tanslating moves to something human readable. 

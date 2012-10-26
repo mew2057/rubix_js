@@ -28,14 +28,13 @@ AStar.prototype.iterativeAStar = function(initialState)
     {
         RubixState.rotate(initialState,Math.floor(Math.random()*6), Math.floor(Math.random()*3 + 1));  
     }*/
-    
     console.log(RubixState.toString(initialState));
 
     var initialNode = new RubixNode(initialState);
     
     
     depth = initialNode.fn;
-    
+    console.log(depth);
     while(!goalNode)
     {
         //TODO get Garbage collection to run here...

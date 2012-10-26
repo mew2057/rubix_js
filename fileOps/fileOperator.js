@@ -29,7 +29,8 @@ FileOperator.init = function()
     window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
        
     window.addEventListener("drop",FileOperator.operator.drop);
-    window.addEventListener("dragEnter",FileOperator.operator.nullEffects);    
+    window.addEventListener("dragenter",FileOperator.operator.nullEffects);    
+    window.addEventListener("dragover",FileOperator.operator.nullEffects);
 };
 
 /**
@@ -76,7 +77,7 @@ FileOperator.prototype.processFileText = function(input)
     
     var state = RubixState.createWithString(this.text);
     
-    $("#outputDiv").text((new AStar()).iterativeAStar(state));
+    (new AStar()).iterativeAStar(state);
 };
 
 /**
@@ -105,8 +106,8 @@ FileOperator.presentForDownload = function(data, fn)
         FileOperator.operator.toWrite = data.toString();
     }
     
-    // Initialize the sandboxed file system with 200 MB; to be refined
-    window.requestFileSystem(window.TEMPORARY, 200*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
+    // Initialize the sandboxed file system with 60 MB; to be refined
+    window.requestFileSystem(window.TEMPORARY, 60*1024*1024 , FileOperator.operator.writeAndPresent, generalErrorHandler);
 };
 
 /**

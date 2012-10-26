@@ -85,7 +85,7 @@ PriorityMinQueue.prototype.remove = function()
     
     if(this.h.length > 0)
     {
-        toReturn = this.h[0].v.pop();
+        toReturn = this.h[0].v.shift();
         
         if(this.h[0].v.length === 0)
         {
@@ -141,3 +141,7 @@ PriorityMinQueue.prototype.isEmpty = function()
     return this.h.length === 0;
 };
 
+PriorityMinQueue.prototype.clean = function()
+{
+    delete this.h;   
+};
